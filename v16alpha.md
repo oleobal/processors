@@ -2,7 +2,7 @@ V16α processor (V16alpha)
 =========================
 
 The V16alpha is a general-purpose 16 bit processor that lacks all the
-features you would wish, and has all sorts of things you wish it hadn't.
+features you would wish, and has all sorts of things you wish it didn't.
 
 
 ### Facilities
@@ -21,16 +21,18 @@ components :
 
 
 `RCNT` and `RSTA` work the same way, in that they both address a memory
-unit (table). Both memory units are filled with zeroes at init.
+unit (table).
 
 `RCNT` addresses instructions, which are 3 bytes long (operator, 
-operand 1, operand 2). If the second operand is not present, it is
+operand 1, operand 2). If the operands are not present, they are
 replaced with `0xFF` padding. `RCNT` is thus addressing 768 bytes
-(256 instructions).
+(256 instructions). The data unit it addresses is filled with ones
+(`0xFF`) at initialization.
 
 The stack addressed by `RSTA` is a memory unit of 256 bits, which is
 split in thirty-two 8-bits values. It can be addressed randomly, but
-supports stack operations and is referred to as the stack.
+supports stack operations and is referred to as the stack. The data
+unit it addresses is filled with zeroes (`0x00`) at initialization.
 
 ### Operations
 
@@ -67,7 +69,7 @@ Machine code/operator table :
 |-------|------|
 | STORE |`0xA0`|
 |       |      |
-| END   |`0xC9`|
+| END   |`0xCF`|
 
 In addition, `0xFF` serves as a 'skip this instruction' operator.
 

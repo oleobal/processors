@@ -63,7 +63,7 @@ class V16alpha(Processor)  :
 		# the reason this is here is the pointers to local methods.
 		self.machineCode={
 			0xA0:"STORE",
-			0xC9:"END",
+			0xCF:"END",
 			
 			0xD0:self.register,
 			0xD1:self.err,
@@ -195,7 +195,7 @@ if __name__ == '__main__' :
 	print(p.err)
 	print(p.register)
 	print("====== Starting execution ======")
-	p.loadProgram(bytes([0xA0, 0x0A, 0xD0, 0xFF,0xFF,0xFF,0xC9,0xFF,0xFF]))
+	p.loadProgram(bytes([0xA0, 0x0A, 0xD0, 0xFF,0xFF,0xFF,0xCF,0xFF,0xFF]))
 	while (p.err.value < 9):
 		p.cycle()
 		print(p.register)
