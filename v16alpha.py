@@ -1,5 +1,7 @@
 from processor import *
 
+
+
 class V16alpha(Processor)  :
 	"""
 	A simple processor
@@ -13,10 +15,12 @@ class V16alpha(Processor)  :
 	 - an 8-bit register for status/error codes
 	"""
 	
+
 	# cost of ops in cycles
 	# of course this is nonsensical, especially if I want to implement
 	# a pipeline some day
 	# but really this whole thing is nonsensical
+	
 	operations={
 	"STORE":2,
 	"ADD":3
@@ -41,62 +45,56 @@ class V16alpha(Processor)  :
 		# execute them in parallel, if they are parallelizable
 		# so basically it's some kind of potential pipeline
 	
+	
+		# translation table
+		# I could pull this automatically and stick it in the documentation,
+		# yes.. But it wouldn't be in line with the spirit of the whole
+		# thing.
+		
+		# the reason this is here is the pointers to local methods.
+		self.machineCode={
+			0xA0:"STORE",
+			
+			0xD0:self.register,
+			0xD1:self.err,
+			0xD2:self.io,
+			0xD3:self.programCounter,
+			0xD4:self.stackPointer
 
-	def parseInstruction(self, instruction):
+		}
+		for i in range(0xA0):
+			self.machineCode[i] = i
+
+	def parseInstruction(self, code):
 		"""
-		converts a string into a tuple
+		converts a byte array into a tuple
 		(op, target[, target])
 		"""
-		tab = instruction.upper().split()
-		
-		t1 = tab[1]
-		try:
-			t1 = int(t1)
-		except ValueError:
-			if t1 == "RINT":
-				t1 = self.register
-			elif t1 == "RERR":
-				t1 = self.err
-			elif t1 == "RINO":
-				t1 = self.io
-			elif t1 == "RCNT":
-				t1 = self.programCounter
-			elif t1 == "RSTA":
-				t1 = self.stackPointer
-			else:
-				self.err = 11
-		
-		if len(tab) == 2 :
-			return (tab[0], t1)
-		
-		t2 = tab[2]
-		try:
-			t2 = int(t2)
-		except ValueError:
-			if t2 == "RINT":
-				t2 = self.register
-			elif t2 == "RERR":
-				t2 = self.err
-			elif t2 == "RINO":
-				t2 = self.io
-			elif t2 == "RCNT":
-				t2 = self.programCounter
-			elif t2 == "RSTA":
-				t2 = self.stackPointer
-			else:
-				self.err.value = 11
-		
-		return (tab[0],t1,t2)
-			
-	
+		op = self.machineCode[code[0]]
+		t1 = self.machineCode[code[1]]
+		if len(code) == 2:
+			return (op, t1)
+		else:
+			t2 = self.machineCode[code[2]]
+			return (op, t1, t2)
 	
 	def loadProgram(self,code):
 		"""
 		terminates current operations,
-		replaces self.program with the given code,
+		replaces self.program with the given code (after processing)
 		and resets programCounter to 0
+		
+		:param code: a bytes object,
+		             instructions separated by 0xFF
 		"""
-		self.program = code
+		self.program=[]
+		
+		code = code.split(bytes([0xFF]))
+		for i in code:
+			if i == b'':
+				continue
+			self.program.append(i)
+		
 		self.programCounter.value=0
 		self.err.value = 0
 	
@@ -116,20 +114,23 @@ class V16alpha(Processor)  :
 			self.err.value = 3
 			return
 		
-		try :
+		try:
 			instruction = self.parseInstruction(self.program[self.programCounter.value])
 			
 			op = instruction[0]
 			t1 = instruction[1]
 			if len(instruction) > 2 :
 				t2 = instruction[2]
-		except Exception as e:
+		except KeyError :
+			self.err.value = 11
 			return
+		except Exception as e:
+			self.err.value = 255 # dreaded
+			raise
 		
 		if op not in V16alpha.operations:
 			self.err.value = 10
 			return
-		
 
 		
 		if op == "STORE":
@@ -162,7 +163,7 @@ if __name__ == '__main__' :
 	p.cycle()
 	print(p.err)
 	print(p.register)
-	p.loadProgram(["STORE 10 RINT"])
+	p.loadProgram(bytes([0xA0, 0x0A, 0xD0, 0xFF]))
 	while (p.err.value < 3):
 		p.cycle()
 		print(p.register)

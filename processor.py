@@ -6,7 +6,7 @@ class Register :
 	"""
 	
 	def __str__(self):
-		return "Register {0}, {1} bits, val {2} ({3})".format(self.name, self.size, self.value, hex(self.value))
+		return "Register {0}, {1} bits, val {2} (0x{3:X})".format(self.name, self.size, self.value, self.value)
 	
 	def __init__(self, size, name=""):
 		self.name = name
