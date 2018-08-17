@@ -1,7 +1,6 @@
 from processor import *
 
 
-
 class V16alpha(Processor)  :
 	"""
 	A simple processor
@@ -23,13 +22,23 @@ class V16alpha(Processor)  :
 	
 	operations={
 	"STORE":2,
-	"ADD":3
+	"END":1,
+	"ADD":3,
 	}
+	
+	errorCodes ={
+	
+	}
+	
+	# bits of addressing of the program table
+	INSTRUCTION_ADDRESSING_SIZE = 8
+	# octets per instruction
+	INSTRUCTION_SIZE = 3
 	
 	def __init__(self):
 		self.cycleCount=0
-		self.program = []
-		self.programCounter= Register(16, name="COUNTER")
+		self.program = bytearray([0xFF]*2**V16alpha.INSTRUCTION_ADDRESSING_SIZE*V16alpha.INSTRUCTION_SIZE)
+		self.programCounter= Register(V16alpha.INSTRUCTION_ADDRESSING_SIZE, name="COUNTER")
 		self.register = Register(16, name="INTERNAL")
 		self.stack = [] #TODO stack structure
 		self.stackPointer = Register(4, name="STACK")
@@ -54,29 +63,38 @@ class V16alpha(Processor)  :
 		# the reason this is here is the pointers to local methods.
 		self.machineCode={
 			0xA0:"STORE",
+			0xC9:"END",
 			
 			0xD0:self.register,
 			0xD1:self.err,
 			0xD2:self.io,
 			0xD3:self.programCounter,
-			0xD4:self.stackPointer
-
+			0xD4:self.stackPointer,
+			
+			
+			0xFF:0xFF
 		}
 		for i in range(0xA0):
 			self.machineCode[i] = i
 
-	def parseInstruction(self, code):
+	def parseInstruction(self, counter):
 		"""
 		converts a byte array into a tuple
-		(op, target[, target])
+		(op[, target[, target]])
+		:param counter: the current value of the program counter
 		"""
-		op = self.machineCode[code[0]]
-		t1 = self.machineCode[code[1]]
-		if len(code) == 2:
-			return (op, t1)
-		else:
-			t2 = self.machineCode[code[2]]
-			return (op, t1, t2)
+
+		op = self.machineCode[self.program[counter*V16alpha.INSTRUCTION_SIZE]]
+		t1 = self.machineCode[self.program[counter*V16alpha.INSTRUCTION_SIZE+1]]
+		t2 = self.machineCode[self.program[counter*V16alpha.INSTRUCTION_SIZE+2]]
+		
+		if t1 == 0xFF :
+			return [op]
+		
+		if t2 == 0xFF :
+			return [op, t1]
+			
+		return [op, t1, t2]
 	
 	def loadProgram(self,code):
 		"""
@@ -85,15 +103,15 @@ class V16alpha(Processor)  :
 		and resets programCounter to 0
 		
 		:param code: a bytes object,
-		             instructions separated by 0xFF
+		             instructions of length 3 bytes, padded with 0xFF
 		"""
-		self.program=[]
+		self.program = bytearray([0xFF]*2**V16alpha.INSTRUCTION_ADDRESSING_SIZE*V16alpha.INSTRUCTION_SIZE)
 		
-		code = code.split(bytes([0xFF]))
-		for i in code:
-			if i == b'':
-				continue
-			self.program.append(i)
+		i = 0
+		for i in range(len(code)):
+			self.program[i] = code[i]
+		
+		#printByteArray(self.program, groupBytesBy=3, name="v16alpha program")
 		
 		self.programCounter.value=0
 		self.err.value = 0
@@ -104,26 +122,33 @@ class V16alpha(Processor)  :
 		One processor cycle.
 		"""
 		self.cycleCount += 1
-		self.err.value = 2
 		
+		if self.err.value == 9:
+			# starting execution back from the top
+			self.programCounter.value = 0
+			
+		self.err.value = 2
 		
 		if len(self.program) == 0:
 			self.err.value = 1
 			return
-		if self.programCounter.value == len(self.program) :
-			self.err.value = 3
+		if self.programCounter.value == (2**V16alpha.INSTRUCTION_ADDRESSING_SIZE-1) :
+			self.err.value = 9
 			return
 		
+
+		
 		try:
-			instruction = self.parseInstruction(self.program[self.programCounter.value])
+			instruction = self.parseInstruction(self.programCounter.value)
 			
 			op = instruction[0]
-			t1 = instruction[1]
-			if len(instruction) > 2 :
-				t2 = instruction[2]
+			if op == 0xFF:
+				self.err.value = 3
+				self.programCounter.value+=1
+				return
 		except KeyError :
 			self.err.value = 11
-			return
+			raise
 		except Exception as e:
 			self.err.value = 255 # dreaded
 			raise
@@ -133,10 +158,16 @@ class V16alpha(Processor)  :
 			return
 
 		
+		if op == "END":
+			self.err.value=9
+			return
+		
 		if op == "STORE":
 			if len(instruction) != 3:
 				self.err.value = 12
 				return
+			t1 = instruction[1]
+			t2 = instruction[2]
 			if type(t1) is int :
 				a = t1
 			elif type(t1) is Register:
@@ -163,8 +194,10 @@ if __name__ == '__main__' :
 	p.cycle()
 	print(p.err)
 	print(p.register)
-	p.loadProgram(bytes([0xA0, 0x0A, 0xD0, 0xFF]))
-	while (p.err.value < 3):
+	print("====== Starting execution ======")
+	p.loadProgram(bytes([0xA0, 0x0A, 0xD0, 0xFF,0xFF,0xFF,0xC9,0xFF,0xFF]))
+	while (p.err.value < 9):
 		p.cycle()
 		print(p.register)
 		print(p.err)
+		print(p.programCounter)

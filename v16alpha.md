@@ -16,12 +16,21 @@ In addition, other registers are used for operation of mostly automatic
 components :
  
  - `RERR` (error), set by the processor during operation (8 bits)
- - `RCNT` (counter), pointing to the current instructions (16 bits)
+ - `RCNT` (counter), pointing to the current instructions (8 bits)
  - `RSTA` (stack), pointing to the current stack level (4 bits)
 
 
+`RCNT` and `RSTA` work the same way, in that they both address a memory
+unit (table). Both memory units are filled with zeroes at init.
+
+`RCNT` addresses instructions, which are 3 bytes long (operator, 
+operand 1, operand 2). If the second operand is not present, it is
+replaced with `0xFF` padding. `RCNT` is thus addressing 768 bytes
+(256 instructions).
+
 The stack addressed by `RSTA` is a memory unit of 256 bits, which is
-split in thirty-two 8-bits values.
+split in thirty-two 8-bits values. It can be addressed randomly, but
+supports stack operations and is referred to as the stack.
 
 ### Operations
 
@@ -35,6 +44,11 @@ Operations :
 |-------|-----------|-----------|------------------------|
 | STORE | value/reg | reg       | Stores oper1 in oper2  |
 |       |           |           |                        |
+| END   |           |           | ends execution         |
+
+Operation ends either on fatal error (check `RERR`), on `END`
+instruction, or when reaching the end of the program table
+(both produce error code 9).
 
 ### Machine code
 
@@ -53,6 +67,9 @@ Machine code/operator table :
 |-------|------|
 | STORE |`0xA0`|
 |       |      |
+| END   |`0xC9`|
+
+In addition, `0xFF` serves as a 'skip this instruction' operator.
 
 Codes for registers :
 
@@ -74,7 +91,9 @@ Available by checking `RERR`, an 8-bit register. Codes :
 | 0    | 0   | Processor ready          |
 | 1    | 1   | No program               |
 | 2    | 2   | Executing                |
-| 3    | 3   | Finished execution       |
+| 3    | 3   | Skipped a 0xFF operator  |
+|      |     |                          |
+| 9    | 9   | Finished execution       |
 |      |     |                          |
 | 10   | A   | Invalid operation        |
 | 11   | B   | Invalid operand          |
