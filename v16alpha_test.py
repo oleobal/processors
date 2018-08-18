@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 
-from processor import *
+from processor import printByteArray
 
-from v16alpha import V16alpha
+from v16alpha.v16alpha import V16alpha
 
-from v16alpha_asm import *
+from v16alpha.v16alpha_asm import *
 
 if __name__ == '__main__' :
 	p = V16alpha()
@@ -12,9 +12,10 @@ if __name__ == '__main__' :
 	print(p.register)
 	print("======     Starting execution     ======")
 	prog = assemble("""\
-STORE 18 RINT
+STORE 21 RINT
 # cannot write 0xCF, have to compute it
-STORE 157 RINO
+PUSH 157
+POP RINO
 ADD 50 RINO
 DSPR RINO RINT""")
 	p.loadProgram(prog)

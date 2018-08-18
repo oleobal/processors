@@ -6,6 +6,8 @@ conversionTable={
 	"DSPR" :0xA2,
 	"DLST" :0xA3,
 	"DSST" :0xA4,
+	"PUSH" :0xA5,
+	"POP"  :0xA6,
 	
 	"ADD"  :0xB0,
 	

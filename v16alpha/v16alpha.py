@@ -26,11 +26,13 @@ class V16alpha(Processor)  :
 	"DSPR" :3,
 	"DLST" :3,
 	"DSST" :3,
+	"PUSH" :2,
+	"POP"  :2,
 
 	"ADD"  :2,
 	
 	"END"  :1,
-	0xFF:1,
+	   0xFF:1,
 	}
 	
 	errorCodes ={
@@ -72,6 +74,10 @@ class V16alpha(Processor)  :
 			0xA0:"STORE",
 			0xA1:"DLPR",
 			0xA2:"DSPR",
+			0xA3:"DLST",
+			0xA4:"DSST",
+			0xA5:"PUSH",
+			0xA6:"POP",
 			
 			0xB0:"ADD",
 			
@@ -183,11 +189,15 @@ class V16alpha(Processor)  :
 			# starting execution back from the top
 			self.programCounter.value = 0
 			
-		self.err.value = 2
 		
-		if (self.currentInstructionState == 0):
+		
+		if self.currentInstructionState == 0:
 			try:
+				if self.err.value != 0:
+					self.programCounter.value+=1
+				
 				self.loadNextInstruction()
+				
 			except Exception:
 				if self.err.value == 2:
 					self.err.value = 255
@@ -195,6 +205,8 @@ class V16alpha(Processor)  :
 			if self.err.value in (3, 9):
 				return
 
+		self.err.value = 2
+		
 		self.currentInstructionState-=1
 		if self.currentInstructionState > 0 :
 			return
@@ -202,14 +214,16 @@ class V16alpha(Processor)  :
 		instruction = self.currentInstructionDecoded
 		op = instruction[0]
 		
+		
 		if op == 0xFF:
 			self.err.value=3
+			return
 
-		if op == "END":
+		elif op == "END":
 			self.err.value=9
 			return
 		
-		if op == "STORE":
+		elif op == "STORE":
 			if len(instruction) != 3:
 				self.err.value = 12
 				return
@@ -227,7 +241,7 @@ class V16alpha(Processor)  :
 				self.err.value = 11
 				return
 
-		if op in ("DLPR", "DLST") :
+		elif op in ("DLPR", "DLST") :
 			if len(instruction) != 3:
 				self.err.value = 12
 				return
@@ -249,7 +263,7 @@ class V16alpha(Processor)  :
 				return
 			
 		
-		if op in ("DSPR", "DSST") :
+		elif op in ("DSPR", "DSST") :
 			if len(instruction) != 3:
 				self.err.value = 12
 				return
@@ -268,7 +282,31 @@ class V16alpha(Processor)  :
 			elif type(index) is Register:
 				dataArray[index.value] = a
 
-		if op == "ADD":
+		elif op == "PUSH" :
+			if len(instruction) != 2:
+				self.err.value = 12
+				return
+			source = instruction[1]
+			if type(source) is int :
+				self.stack[self.stackPointer.value] = source
+			elif type(source) is Register:
+				self.stack[self.stackPointer.value] = source.value
+			self.stackPointer.value+=1
+		
+		elif op == "POP":
+			if len(instruction) != 2:
+				self.err.value = 12
+				return
+			target = instruction[1]
+			if type(target) is Register:
+				self.stackPointer.value-=1
+				target.value = self.stack[self.stackPointer.value]
+			else:
+				self.err.value=12
+				return
+			
+
+		elif op == "ADD":
 			if len(instruction) != 3:
 				self.err.value = 12
 				return
@@ -283,9 +321,7 @@ class V16alpha(Processor)  :
 			else:
 				self.err.value = 12
 				return
-				
-				
-				
-				
-				
-		self.programCounter.value+=1
+		
+		self.err.value = 4
+
+		

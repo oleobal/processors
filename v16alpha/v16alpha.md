@@ -59,6 +59,8 @@ Operations :
 | DSPR  | value/reg | value/reg | Store op1 to program[op2]   | 3    |
 | DLST  | value/reg | reg       | Load stack[op1] to op2      | 3    |
 | DSST  | value/reg | value/reg | Store op1 to stack[op2]     | 3    |
+| PUSH  | value/reg |           | Push a value onto the stack | 2    |
+| POP   | reg       |           | Pop the topmost value       | 2    |
 |       |           |           |                             |      |
 | ADD   | value/reg | reg       | Add op1 to op2 in op2       | 2    |
 |       |           |           |                             |      |
@@ -123,6 +125,7 @@ Available by checking `RERR`, an 8-bit register. Codes :
 | 1    | 1   | No program               |
 | 2    | 2   | Executing                |
 | 3    | 3   | Skipped a 0xFF operator  |
+| 4    | 4   | Finished current instr   |
 |      |     |                          |
 | 9    | 9   | Finished execution       |
 |      |     |                          |
