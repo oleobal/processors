@@ -209,17 +209,4 @@ class V16alpha(Processor)  :
 		self.programCounter.value+=1
 
 
-if __name__ == '__main__' :
-	p = V16alpha()
-	print(p.err)
-	p.cycle()
-	print(p.err)
-	print(p.register)
-	print("====== Starting execution ======")
-	p.loadProgram(bytes([0xA0, 0x0A, 0xD0, 0xFF,0xFF,0xFF,0xCF,0xFF,0xFF]))
-	while (p.err.value < 9):
-		p.cycle()
-		print(p.register)
-		print(p.err)
-		print(p.programCounter)
-	print(p.cycleCount)
+

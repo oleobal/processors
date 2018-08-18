@@ -45,13 +45,58 @@ def printByteArray(array, groupBytesBy=8, name=None):
 	if name != None:
 		print(name)
 	
-	g = 0; k=0
-	output = "   0 "
-	for i in array:
-		g+=1
-		k+=1
-		output+=" {:0<2X}".format(i)
-		if g==groupBytesBy:
-			print(output)
-			output = "{:>4} ".format(k)
-			g=0
+	outTable = []
+	
+	i = 0
+	while i < len(array):
+		g = 0
+		thisGroup = (i, bytearray())
+		while g < groupBytesBy:
+			thisGroup[1].append(array[i])
+			i+=1
+			g+=1
+		outTable.append(thisGroup)
+	
+	lineLength = 5+3*groupBytesBy
+	sameThingLine = " "*(lineLength//4)+"[same]\n"
+	output = ""
+	
+	output += "{:>4}".format(outTable[0][0])
+	for j in outTable[0][1]:
+		output+=" {:0<2X}".format(j)
+	output+="\n"
+	i = 1
+	while i < len(outTable):
+		if outTable[i][1] == outTable[i-1][1]:
+			output += sameThingLine
+		else:
+			output += "{:>4}".format(outTable[i][0])
+			for j in outTable[i][1]:
+				output+=" {:0<2X}".format(j)
+			output+="\n"
+		i+=1
+	
+	
+	
+	lines =  output.splitlines(keepends=True)
+	output = ""
+	i = 0
+	sameCount = 0
+	while i < len(lines):
+		if lines[i] == sameThingLine:
+			sameCount+=1
+		else:
+			if sameCount == 1:
+				output+=sameThingLine
+			elif sameCount > 1 :
+				output+=sameThingLine[:-1]+" x"+str(sameCount)+"\n"
+			output+=lines[i]
+			sameCount=0
+		i+=1
+	
+	if sameCount == 1:
+		output+=sameThingLine
+	elif sameCount > 1 :
+		output+=sameThingLine[:-2]+" x"+str(sameCount)+"]\n"
+	
+	print(output)
