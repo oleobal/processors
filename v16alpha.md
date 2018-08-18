@@ -48,19 +48,21 @@ Assembly for the V16alpha is a list of commands of the form :
 Values are in decimal or hexadecimal (prefixed with `0x`), from 0
 to 159. Targets are generally data units such as registers.
 
+Lines starting with `#` are comments, and not parsed.
+
 Operations :
 
 |  OP   | operand 1 | operand 2 | Description                 | Cost |
 |-------|-----------|-----------|-----------------------------|------|
-| STORE | value/reg | reg       | Stores op1 in op2           | 2    |
-| DLPR  | value/reg | reg       | Loads program[op1] to op2   | 3    |
-| DSPR  | value/reg | value/reg | Stores op1 to program[op2]  | 3    |
-| DLST  | value/reg | reg       | Loads stack[op1] to op2     | 3    |
-| DSST  | value/reg | value/reg | Stores op1 to stack[op2]    | 3    |
+| STORE | value/reg | reg       | Store op1 in op2            | 2    |
+| DLPR  | value/reg | reg       | Load program[op1] to op2    | 3    |
+| DSPR  | value/reg | value/reg | Store op1 to program[op2]   | 3    |
+| DLST  | value/reg | reg       | Load stack[op1] to op2      | 3    |
+| DSST  | value/reg | value/reg | Store op1 to stack[op2]     | 3    |
 |       |           |           |                             |      |
-| ADD   | value/reg | reg       | Adds op1 to op2 in op2      | 2    |
+| ADD   | value/reg | reg       | Add op1 to op2 in op2       | 2    |
 |       |           |           |                             |      |
-| END   |           |           | Ends execution              | 1    |
+| END   |           |           | End execution               | 1    |
 
 Costs in number of cycles. When a register is specified instead of a
 literal value, its value is used.
@@ -91,6 +93,10 @@ Machine code/operator table :
 | STORE |`0xA0`|
 | DLPR  |`0xA1`|
 | DSPR  |`0xA2`|
+| DLST  |`0xA3`|
+| DSST  |`0xA4`|
+|       |      |
+| ADD   |`0xB0`|
 |       |      |
 | END   |`0xCF`|
 

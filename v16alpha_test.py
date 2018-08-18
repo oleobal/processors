@@ -11,8 +11,9 @@ if __name__ == '__main__' :
 	print(p.err)
 	print(p.register)
 	print("======     Starting execution     ======")
-	prog = compileASM("""\
+	prog = assemble("""\
 STORE 18 RINT
+# cannot write 0xCF, have to compute it
 STORE 157 RINO
 ADD 50 RINO
 DSPR RINO RINT""")
@@ -20,8 +21,7 @@ DSPR RINO RINT""")
 	#p.loadProgram(bytes([0xA0, 0x0A, 0xD0, 0xFF,0xFF,0xFF,0xCF,0xFF,0xFF]))
 	while (p.err.value < 9):
 		p.cycle()
-		print(p.err)
-		print(p.programCounter)
+		print(p.err, p.programCounter)
 	print("======       Ended execution      ======")
 	printByteArray(p.program, groupBytesBy=3, name="Program data")
 	print(p.register)

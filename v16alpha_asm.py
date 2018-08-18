@@ -20,13 +20,17 @@ conversionTable={
 
 INSTRUCTION_SIZE = 3
 
-def compileASM(assembly):
+def assemble(assembly, sizeWarning=256):
 	"""
 	takes a string of assembly code and returns machine code
 	for the V16alpha processor
+	:param sizeWarning: issue a warning if the generated code is bigger
+	                    set to None to disable
 	"""
 	output = bytearray()
 	for line in assembly.splitlines():
+		if line[0] == "#" :
+			continue
 		byteline = bytearray()
 		line = line.split()
 		for i in line :
@@ -40,5 +44,8 @@ def compileASM(assembly):
 		while len(byteline) < INSTRUCTION_SIZE:
 			byteline.append(0xFF)
 		output+=(byteline)
-		
+	
+	if sizeWarning is not None and len(output) > sizeWarning :
+		from sys import stderr
+		print("Warning : program is over {} bytes !".format(sizeWarning), file=stderr)
 	return output
