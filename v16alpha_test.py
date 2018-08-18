@@ -12,9 +12,10 @@ if __name__ == '__main__' :
 	print(p.register)
 	print("======     Starting execution     ======")
 	prog = compileASM("""\
-STORE 10 RINT
-STORE 0x55 RINO
-END""")
+STORE 18 RINT
+STORE 157 RINO
+ADD 50 RINO
+DSPR RINO RINT""")
 	p.loadProgram(prog)
 	#p.loadProgram(bytes([0xA0, 0x0A, 0xD0, 0xFF,0xFF,0xFF,0xCF,0xFF,0xFF]))
 	while (p.err.value < 9):

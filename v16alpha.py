@@ -22,8 +22,15 @@ class V16alpha(Processor)  :
 	
 	operations={
 	"STORE":2,
-	"END":1,
-	"ADD":3,
+	"DLPR" :3,
+	"DSPR" :3,
+	"DLST" :3,
+	"DSST" :3,
+
+	"ADD"  :2,
+	
+	"END"  :1,
+	0xFF:1,
 	}
 	
 	errorCodes ={
@@ -63,6 +70,11 @@ class V16alpha(Processor)  :
 		# the reason this is here is the pointers to local methods.
 		self.machineCode={
 			0xA0:"STORE",
+			0xA1:"DLPR",
+			0xA2:"DSPR",
+			
+			0xB0:"ADD",
+			
 			0xCF:"END",
 			
 			0xD0:self.register,
@@ -145,9 +157,6 @@ class V16alpha(Processor)  :
 			instruction = self.parseInstruction(machineInstr)
 			
 			
-			if machineInstr[0] == 0xFF:
-				self.err.value = 3
-				return
 		except KeyError :
 			self.err.value = 11
 			raise
@@ -193,7 +202,9 @@ class V16alpha(Processor)  :
 		instruction = self.currentInstructionDecoded
 		op = instruction[0]
 		
-		
+		if op == 0xFF:
+			self.err.value=3
+
 		if op == "END":
 			self.err.value=9
 			return
@@ -216,9 +227,65 @@ class V16alpha(Processor)  :
 				self.err.value = 11
 				return
 
-
+		if op in ("DLPR", "DLST") :
+			if len(instruction) != 3:
+				self.err.value = 12
+				return
+			if op == "DLPR":
+				dataArray = self.program
+			elif op == "DLST":
+				dataArray = self.stack
+			index = instruction[1]
+			target = instruction[2]
+			if type(index) is int:
+				a = dataArray[index]
+			elif type(index) is Register:
+				a = dataArray[index.value]
+			
+			if type(target) is Register:
+				target.value = a
+			else:
+				self.err.value = 12
+				return
+			
 		
+		if op in ("DSPR", "DSST") :
+			if len(instruction) != 3:
+				self.err.value = 12
+				return
+			if op == "DSPR":
+				dataArray = self.program
+			elif op == "DSST":
+				dataArray = self.stack
+			source = instruction[1]
+			index = instruction[2]
+			if type(source) is int:
+				a = source
+			elif type(source) is Register:
+				a = source.value
+			if type(index) is int:
+				dataArray[index] = a
+			elif type(index) is Register:
+				dataArray[index.value] = a
+
+		if op == "ADD":
+			if len(instruction) != 3:
+				self.err.value = 12
+				return
+			source = instruction[1]
+			target = instruction[2]
+			if type(source) is int:
+				a = source
+			elif type(source) is Register:
+				a = source.value
+			if type(target) is Register:
+				target.value += a
+			else:
+				self.err.value = 12
+				return
+				
+				
+				
+				
+				
 		self.programCounter.value+=1
-
-
-

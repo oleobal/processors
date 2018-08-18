@@ -63,7 +63,7 @@ def printByteArray(array, groupBytesBy=8, name=None):
 	
 	output += "{:>4}".format(outTable[0][0])
 	for j in outTable[0][1]:
-		output+=" {:0<2X}".format(j)
+		output+=" {:0>2X}".format(j)
 	output+="\n"
 	i = 1
 	while i < len(outTable):
@@ -72,7 +72,7 @@ def printByteArray(array, groupBytesBy=8, name=None):
 		else:
 			output += "{:>4}".format(outTable[i][0])
 			for j in outTable[i][1]:
-				output+=" {:0<2X}".format(j)
+				output+=" {:0>2X}".format(j)
 			output+="\n"
 		i+=1
 	

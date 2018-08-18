@@ -29,6 +29,8 @@ replaced with `0xFF` padding. `RCNT` is thus addressing 768 bytes
 (256 instructions). The data unit it addresses is filled with ones
 (`0xFF`) at initialization. You may also use `DLPR` to load data from
 the unit into a register, and `DSPR` to store data into the unit.
+Note that these instructions address the unit byte per byte, unlike
+`RCNT` !
 
 The stack addressed by `RSTA` is a memory unit of 256 bits, which is
 split in thirty-two 8-bits values. It can be addressed randomly, but
@@ -48,13 +50,20 @@ to 159. Targets are generally data units such as registers.
 
 Operations :
 
-|  OP   | operand 1 | operand 2 | Description            | Cost |
-|-------|-----------|-----------|------------------------|------|
-| STORE | value/reg | reg       | Stores oper1 in oper2  | 2    |
-|       |           |           |                        |      |
-| END   |           |           | ends execution         | 1    |
+|  OP   | operand 1 | operand 2 | Description                 | Cost |
+|-------|-----------|-----------|-----------------------------|------|
+| STORE | value/reg | reg       | Stores op1 in op2           | 2    |
+| DLPR  | value/reg | reg       | Loads program[op1] to op2   | 3    |
+| DSPR  | value/reg | value/reg | Stores op1 to program[op2]  | 3    |
+| DLST  | value/reg | reg       | Loads stack[op1] to op2     | 3    |
+| DSST  | value/reg | value/reg | Stores op1 to stack[op2]    | 3    |
+|       |           |           |                             |      |
+| ADD   | value/reg | reg       | Adds op1 to op2 in op2      | 2    |
+|       |           |           |                             |      |
+| END   |           |           | Ends execution              | 1    |
 
-(Costs in number of cycles)
+Costs in number of cycles. When a register is specified instead of a
+literal value, its value is used.
 
 Operation ends either on fatal error (check `RERR`), on `END`
 instruction, or when reaching the end of the program table
@@ -65,10 +74,11 @@ the program counter to 0.
 
 ### Machine code
 
-Operators and operands are one byte each.
-Operations are delimited by `0xFF`.
+Operators and operands are one byte each. Each instruction is three
+bytes long, with `0xFF` used to pad instructions that have less than
+two operands.
 
-Operands up to `0x1F` are taken as values, as is.
+Operands up to `0x9F` are taken as values, as is.
 (values above 159 thus cannot be represented directly in machine code,
 and have to be computed)
 Values from `0xA0` are reserved for keywords, up to `0xCF`.
@@ -79,6 +89,8 @@ Machine code/operator table :
 |  OP   | Code |
 |-------|------|
 | STORE |`0xA0`|
+| DLPR  |`0xA1`|
+| DSPR  |`0xA2`|
 |       |      |
 | END   |`0xCF`|
 
