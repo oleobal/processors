@@ -42,11 +42,13 @@ Assembly for the V16alpha is a list of commands of the form :
 
 Operations :
 
-|  OP   | operand 1 | operand 2 | Description            |
-|-------|-----------|-----------|------------------------|
-| STORE | value/reg | reg       | Stores oper1 in oper2  |
-|       |           |           |                        |
-| END   |           |           | ends execution         |
+|  OP   | operand 1 | operand 2 | Description            | Cost |
+|-------|-----------|-----------|------------------------|------|
+| STORE | value/reg | reg       | Stores oper1 in oper2  | 2    |
+|       |           |           |                        |      |
+| END   |           |           | ends execution         | 1    |
+
+(Costs in number of cycles)
 
 Operation ends either on fatal error (check `RERR`), on `END`
 instruction, or when reaching the end of the program table

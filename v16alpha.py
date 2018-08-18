@@ -116,28 +116,16 @@ class V16alpha(Processor)  :
 		self.programCounter.value=0
 		self.err.value = 0
 	
-	
-	def cycle(self):
+	def loadNextInstruction(self):
 		"""
-		One processor cycle.
+		Loads next instruction from the program into the execution queue
 		"""
-		self.cycleCount += 1
-		
-		if self.err.value == 9:
-			# starting execution back from the top
-			self.programCounter.value = 0
-			
-		self.err.value = 2
-		
 		if len(self.program) == 0:
 			self.err.value = 1
 			return
 		if self.programCounter.value == (2**V16alpha.INSTRUCTION_ADDRESSING_SIZE-1) :
 			self.err.value = 9
 			return
-		
-
-		
 		try:
 			instruction = self.parseInstruction(self.programCounter.value)
 			
@@ -156,7 +144,40 @@ class V16alpha(Processor)  :
 		if op not in V16alpha.operations:
 			self.err.value = 10
 			return
+		
+		self.instructionQueue.append(instruction)
+		self.instructionState.append(V16alpha.operations[op])
+			
+	
+	def cycle(self):
+		"""
+		One processor cycle.
+		"""
+		self.cycleCount += 1
+		
+		if self.err.value == 9:
+			# starting execution back from the top
+			self.programCounter.value = 0
+			
+		self.err.value = 2
+		
+		if (len(self.instructionQueue) == 0):
+			try:
+				self.loadNextInstruction()
+			except Exception:
+				if self.err.value == 2:
+					self.err.value = 255
+				raise
+			if self.err.value == 3:
+				return
 
+		if self.instructionState[0] > 1 :
+			self.instructionState[0]-=1
+			return
+			
+		self.instructionState.popleft()
+		instruction = self.instructionQueue.popleft()
+		op = instruction[0]
 		
 		if op == "END":
 			self.err.value=9
@@ -201,3 +222,4 @@ if __name__ == '__main__' :
 		print(p.register)
 		print(p.err)
 		print(p.programCounter)
+	print(p.cycleCount)
