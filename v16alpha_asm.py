@@ -2,6 +2,9 @@
 
 conversionTable={
 	"STORE":0xA0,
+	"DLPR":0xAA,
+	"DSPR":0xA1,
+	
 	"END":0xCF,
 	
 	"RINT":0xD0,

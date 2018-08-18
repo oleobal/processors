@@ -144,7 +144,6 @@ class V16alpha(Processor)  :
 			machineInstr = self.retrieveInstruction(self.programCounter.value)
 			instruction = self.parseInstruction(machineInstr)
 			
-			print(instruction)
 			
 			if machineInstr[0] == 0xFF:
 				self.err.value = 3
@@ -188,11 +187,12 @@ class V16alpha(Processor)  :
 				return
 
 		self.currentInstructionState-=1
-		if self.currentInstructionState > 1 :
+		if self.currentInstructionState > 0 :
 			return
 		
 		instruction = self.currentInstructionDecoded
 		op = instruction[0]
+		
 		
 		if op == "END":
 			self.err.value=9

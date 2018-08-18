@@ -19,20 +19,23 @@ components :
  - `RCNT` (counter), pointing to the current instructions (8 bits)
  - `RSTA` (stack), pointing to the current stack level (4 bits)
 
-
 `RCNT` and `RSTA` work the same way, in that they both address a memory
-unit (table).
+unit. On the V16alpha, "memory units" are arrays of data that cannot be
+used directly by programs. They use specialized operations instead.
 
 `RCNT` addresses instructions, which are 3 bytes long (operator, 
 operand 1, operand 2). If the operands are not present, they are
 replaced with `0xFF` padding. `RCNT` is thus addressing 768 bytes
 (256 instructions). The data unit it addresses is filled with ones
-(`0xFF`) at initialization.
+(`0xFF`) at initialization. You may also use `DLPR` to load data from
+the unit into a register, and `DSPR` to store data into the unit.
 
 The stack addressed by `RSTA` is a memory unit of 256 bits, which is
 split in thirty-two 8-bits values. It can be addressed randomly, but
 supports stack operations and is referred to as the stack. The data
 unit it addresses is filled with zeroes (`0x00`) at initialization.
+You can use `POP` and `PUSH` for automatic operation, or `DLST` and
+`DSST` for loading/storing into the unit.
 
 ### Assembly
 
