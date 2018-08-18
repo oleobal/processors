@@ -40,19 +40,19 @@ class V16alpha(Processor)  :
 		self.program = bytearray([0xFF]*2**V16alpha.INSTRUCTION_ADDRESSING_SIZE*V16alpha.INSTRUCTION_SIZE)
 		self.programCounter= Register(V16alpha.INSTRUCTION_ADDRESSING_SIZE, name="COUNTER")
 		self.register = Register(16, name="INTERNAL")
-		self.stack = [] #TODO stack structure
 		self.stackPointer = Register(4, name="STACK")
+		self.stack = bytearray([0x00]*2**self.stackPointer.size)
 		self.io = Register(16, name="IO")
 		self.err = Register(8, name="ERROR")
 		# TODO catch exceptions and put them here instead
 		
-		self.instructionQueue=deque()
+		self.currentInstruction  = bytearray([0xFF]*V16alpha.INSTRUCTION_SIZE)
+		self.currentInstructionDecoded = None
 		# meant to keep a number of the state of each instruction in the
 		# queue, to see at what state they are in
-		self.instructionState=deque()
-		# potentially, we could put multiple instructions in the queue and
-		# execute them in parallel, if they are parallelizable
-		# so basically it's some kind of potential pipeline
+		self.currentInstructionState = 0
+		# removed the queue mechanism.. Maybe in a next gveneration.
+		# I want this to be more realistic
 	
 	
 		# translation table
@@ -77,16 +77,32 @@ class V16alpha(Processor)  :
 		for i in range(0xA0):
 			self.machineCode[i] = i
 
-	def parseInstruction(self, counter):
+	def retrieveInstruction(self, counter):
 		"""
-		converts a byte array into a tuple
-		(op[, target[, target]])
+		(no side effects)
+		retrieves the instruction at (counter) in the program memory
+		returns a bytearray of length 3
+		"""
+		# doesn't work well with just [i:i+2x] addressing syntax
+		out = bytearray()
+		i = 0
+		while i < V16alpha.INSTRUCTION_SIZE:
+			out.append(self.program[counter*V16alpha.INSTRUCTION_SIZE+i])
+			i+=1
+			
+		return out
+		
+	def parseInstruction(self, array):
+		"""
+		(no side effects)
+		converts a byte array into a list
+		[op[, target[, target]]]
 		:param counter: the current value of the program counter
 		"""
 
-		op = self.machineCode[self.program[counter*V16alpha.INSTRUCTION_SIZE]]
-		t1 = self.machineCode[self.program[counter*V16alpha.INSTRUCTION_SIZE+1]]
-		t2 = self.machineCode[self.program[counter*V16alpha.INSTRUCTION_SIZE+2]]
+		op = self.machineCode[array[0]]
+		t1 = self.machineCode[array[1]]
+		t2 = self.machineCode[array[2]]
 		
 		if t1 == 0xFF :
 			return [op]
@@ -118,21 +134,20 @@ class V16alpha(Processor)  :
 	
 	def loadNextInstruction(self):
 		"""
-		Loads next instruction from the program into the execution queue
+		Loads next instruction from the program into the current
+		execution data unit
 		"""
-		if len(self.program) == 0:
-			self.err.value = 1
-			return
 		if self.programCounter.value == (2**V16alpha.INSTRUCTION_ADDRESSING_SIZE-1) :
 			self.err.value = 9
 			return
 		try:
-			instruction = self.parseInstruction(self.programCounter.value)
+			machineInstr = self.retrieveInstruction(self.programCounter.value)
+			instruction = self.parseInstruction(machineInstr)
 			
-			op = instruction[0]
-			if op == 0xFF:
+			print(instruction)
+			
+			if machineInstr[0] == 0xFF:
 				self.err.value = 3
-				self.programCounter.value+=1
 				return
 		except KeyError :
 			self.err.value = 11
@@ -141,13 +156,14 @@ class V16alpha(Processor)  :
 			self.err.value = 255 # dreaded
 			raise
 		
-		if op not in V16alpha.operations:
+		if instruction[0] not in V16alpha.operations:
 			self.err.value = 10
 			return
 		
-		self.instructionQueue.append(instruction)
-		self.instructionState.append(V16alpha.operations[op])
-			
+		self.currentInstruction = machineInstr
+		self.currentInstructionDecoded = instruction
+		self.currentInstructionState = V16alpha.operations[instruction[0]]
+		
 	
 	def cycle(self):
 		"""
@@ -161,22 +177,21 @@ class V16alpha(Processor)  :
 			
 		self.err.value = 2
 		
-		if (len(self.instructionQueue) == 0):
+		if (self.currentInstructionState == 0):
 			try:
 				self.loadNextInstruction()
 			except Exception:
 				if self.err.value == 2:
 					self.err.value = 255
 				raise
-			if self.err.value == 3:
+			if self.err.value in (3, 9):
 				return
 
-		if self.instructionState[0] > 1 :
-			self.instructionState[0]-=1
+		self.currentInstructionState-=1
+		if self.currentInstructionState > 1 :
 			return
-			
-		self.instructionState.popleft()
-		instruction = self.instructionQueue.popleft()
+		
+		instruction = self.currentInstructionDecoded
 		op = instruction[0]
 		
 		if op == "END":
@@ -200,9 +215,6 @@ class V16alpha(Processor)  :
 			except Exception:
 				self.err.value = 11
 				return
-
-
-
 
 
 		

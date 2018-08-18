@@ -34,11 +34,14 @@ split in thirty-two 8-bits values. It can be addressed randomly, but
 supports stack operations and is referred to as the stack. The data
 unit it addresses is filled with zeroes (`0x00`) at initialization.
 
-### Operations
+### Assembly
 
 Assembly for the V16alpha is a list of commands of the form :
 
-`<OP> <target or value> [target or value]`
+`<OP> [target or value] [target or value]`
+
+Values are in decimal or hexadecimal (prefixed with `0x`), from 0
+to 159. Targets are generally data units such as registers.
 
 Operations :
 
@@ -52,7 +55,10 @@ Operations :
 
 Operation ends either on fatal error (check `RERR`), on `END`
 instruction, or when reaching the end of the program table
-(both produce error code 9).
+(both produce error code `9`).
+
+Running the processor when it is on error code 9 automatically resets
+the program counter to 0.
 
 ### Machine code
 
