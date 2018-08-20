@@ -1,3 +1,7 @@
+"""
+Contains general concepts useful for all implementations
+"""
+
 
 class Register :
 	"""
@@ -30,7 +34,91 @@ class Register :
 		"""Please don't"""
 		del self._value
 		
+
+
+class Pinset:
+	"""
+	A set of exposed pins, for I/O
+	Pins function in a boolean way
+	They can be set together, or addressed individually
 	
+	Pinsets also offer suscription features, to trigger things on change
+	"""
+	def __init__(self, numberOfPins):
+		self._pins = [False]*numberOfPins
+		self.executeOnChange = []
+	
+	def addSuscriber(self, functionToExecute, targetState=None, passState=False):
+		"""
+		:param functionToExecute: pointer to a function to be executed when the
+		                          state of this changes
+		:param targetState: only execute the function if the state of the
+		                    pinset is the same as the table of bools given
+		:param passState: whether to pass a copy of the bool table on execution
+		"""
+		self.executeOnChange+=[functionToExecute, targetState, passState]
+
+	@property
+	def pins(self):
+		return self._pins
+	@pins.setter
+	def pins(self, newState):
+		"""
+		Set the new state of the pinset. Will alert suscribers.
+		:param newState: either a list of bools or an int
+		"""
+		# TODO fix this, it's not really duck-typesque
+		if type(newState) is int or type(newState) is bool:
+			newState = getBoolListFromInt(newState)
+
+		if len(newState) != len(self.pins):
+			raise TypeError("Wrong number of elements")
+			
+		for i in range(len(newState)):
+			self._pins[i] = bool(newState[i])
+		
+		# notify each suscriber
+		# TODO
+		
+	@pins.deleter
+	def pins(self):
+		del self._pins
+
+def getIntFromBoolList(boollist, bigEndian=True):
+	"""
+	converts a list of bools into an int
+	Don't fight me, please
+	"""
+	result = 0
+	if bigEndian:
+		boollist.reverse()
+	for i in range(len(boollist)):
+		result+=boollist[i]*2**i
+	# TODO there's probably a way to do it without computation..
+	return result
+	
+def getBoolListFromInt(integer, bigEndian=True):
+	"""
+	converts an integer into a list of bools
+	"""
+	# this is even worse than the other function, god
+	result=[]
+	i=1
+	while 2**i < integer:
+		i+=1
+	i-=1
+	while i >= 0 :
+		if integer-2**i >= 0 :
+			integer-=2**i
+			result.append(True)
+		else:
+			result.append(False)
+		i-=1
+	
+	if bigEndian==False :
+		result.reverse()
+	return result
+
 class Processor :
 	pass
 
@@ -42,7 +130,7 @@ def printByteArray(array, groupBytesBy=8, name=None):
 	:param name: will print that at the top
 	"""
 	if name != None:
-		print(name)
+		print(name, ":")
 	
 	outTable = []
 	
