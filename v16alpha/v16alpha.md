@@ -41,9 +41,10 @@ You can use `POP` and `PUSH` for automatic operation, or `DLST` and
 
 ### Pinout
 
-(to be implemented)
+*(to be implemented)*
 
-![Pinout diagram](./v16alpha_pinout.svg)
+<img src="./v16alpha_pinout.svg" width="100%" height="300">
+
 
 | No  | Name    | Description                                 |
 |-----|---------|---------------------------------------------|
@@ -89,8 +90,8 @@ Operation ends either on fatal error (check `RERR`), on `END`
 instruction, or when reaching the end of the program table
 (both produce error code `9`).
 
-Running the processor when it is on error code 9 automatically resets
-the program counter to 0.
+Running the processor when it is on error code `9` automatically resets
+the program counter to `0`.
 
 ### Machine code
 
@@ -132,7 +133,7 @@ Codes for registers :
 
 ### Loading a program
 
-(to be implemented)
+*(to be implemented)*
 
 The V16alpha presents 8 pins for transferring programs, plus 2 control pins.
 
@@ -152,7 +153,7 @@ these to `1`, requesting for new instructions.
  - If `2`, the processor will read the new data, write it at the current
    pointer, and go back to `1`
  - If `3`, the processor will do as in the previous, but will immediately
-   execute the new program, back at 0.
+   execute the new program, back at `0`.
 
 (how.. how am I managing the fact that the counter only addresses 3 bytes
   at a time ?)
