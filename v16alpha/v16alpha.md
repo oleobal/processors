@@ -15,7 +15,7 @@ The following registers are provided :
 In addition, other registers are used for operation of mostly automatic
 components :
  
- - `RERR` (error), set by the processor during operation (8 bits)
+ - `RERR` (error), set by the processor during operation (5 bits)
  - `RCNT` (counter), pointing to the current instructions (8 bits)
  - `RSTA` (stack), pointing to the current stack level (4 bits)
 
@@ -38,6 +38,22 @@ supports stack operations and is referred to as the stack. The data
 unit it addresses is filled with zeroes (`0x00`) at initialization.
 You can use `POP` and `PUSH` for automatic operation, or `DLST` and
 `DSST` for loading/storing into the unit.
+
+### Pinout
+
+(to be implemented)
+
+![Pinout diagram](./v16alpha_pinout.svg)
+
+| No  | Name    | Description                                 |
+|-----|---------|---------------------------------------------|
+| 0   |Clock    | Front (1) triggers cycle (proc resets to 0) |
+|1-5  |Error    | Exposes the status code (read only)         |
+|6-7  |P ld ctrl| Controls the loading of a program           |
+|8-15 |Prog load| Data transfer for loading a program         |
+|16-31| I/O     | Read/write the proc's I/O register          |
+|32   | Alim    | Set to logic 1                              |
+|33   | Ground  | Set to logic 0                              |
 
 ### Assembly
 
@@ -114,7 +130,33 @@ Codes for registers :
 | RCNT     |`0xD3`|
 | RSTA     |`0xD4`|
 
+### Loading a program
 
+(to be implemented)
+
+The V16alpha presents 8 pins for transferring programs, plus 2 control pins.
+
+The two control pins are read/write and present :
+
+|Code| Status                   |
+|----|--------------------------|
+| 0  | Executing                |
+| 1  | Request for instruction  |
+| 2  | Please request new instr |
+| 3  | Execute order            |
+
+ - The processor is on status `0` normally. When execution ends, it will switch
+these to `1`, requesting for new instructions. 
+ - An outside force set the data pins for the next octet (instruction word).
+ - The outside force then sets the control pins to either `2` or `3`.
+ - If `2`, the processor will read the new data, write it at the current
+   pointer, and go back to `1`
+ - If `3`, the processor will do as in the previous, but will immediately
+   execute the new program, back at 0.
+
+(how.. how am I managing the fact that the counter only addresses 3 bytes
+  at a time ?)
+   
 ### Status codes
 
 Available by checking `RERR`, an 8-bit register. Codes :
@@ -133,7 +175,7 @@ Available by checking `RERR`, an 8-bit register. Codes :
 | 11   | B   | Invalid operand          |
 | 12   | C   | Wrong number of operands |
 |      |     |                          |
-| 255  | FF  | Other                    |
+| 31   | 1F  | Other                    |
 
 
 

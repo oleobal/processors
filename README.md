@@ -9,7 +9,7 @@ The only one as of now is the V16alpha, a 16-bits processor. Files :
  - `v16alpha/v16alpha_asm.py` contains the assembler
  - `v16alpha_test.py` can be executed to test the processor
 
-It is still lacking many instructions or a pinout. Still, I have an interesting example.
+It is still lacking many instructions and [the pinout](v16alpha/v16alpha_pinout.svg) is still only on paper. Still, I have an interesting example.
 
 The assembly code :
 ```
@@ -25,18 +25,18 @@ Seeks to place `0xCF`, the end instruction, into the program memory of the proce
 
 Execution :
 ```
-Reg ERROR        8 bits val 0      (0x0)
+Reg ERROR        5 bits val 0      (0x0)
 Reg INTERNAL    16 bits val 0      (0x0)
 ======     Starting execution     ======
-Reg ERROR        8 bits val 2      (0x2) Reg COUNTER      8 bits val 0      (0x0)
-Reg ERROR        8 bits val 4      (0x4) Reg COUNTER      8 bits val 0      (0x0)
-Reg ERROR        8 bits val 2      (0x2) Reg COUNTER      8 bits val 1      (0x1)
-Reg ERROR        8 bits val 4      (0x4) Reg COUNTER      8 bits val 1      (0x1)
-Reg ERROR        8 bits val 2      (0x2) Reg COUNTER      8 bits val 2      (0x2)
+Reg ERROR        5 bits val 2      (0x2) Reg COUNTER      8 bits val 0      (0x0)
+Reg ERROR        5 bits val 4      (0x4) Reg COUNTER      8 bits val 0      (0x0)
+Reg ERROR        5 bits val 2      (0x2) Reg COUNTER      8 bits val 1      (0x1)
+Reg ERROR        5 bits val 4      (0x4) Reg COUNTER      8 bits val 1      (0x1)
+Reg ERROR        5 bits val 2      (0x2) Reg COUNTER      8 bits val 2      (0x2)
  [... this repeats...]
-Reg ERROR        8 bits val 3      (0x3) Reg COUNTER      8 bits val 6      (0x6)
-Reg ERROR        8 bits val 3      (0x3) Reg COUNTER      8 bits val 7      (0x7)
-Reg ERROR        8 bits val 9      (0x9) Reg COUNTER      8 bits val 7      (0x7)
+Reg ERROR        5 bits val 3      (0x3) Reg COUNTER      8 bits val 6      (0x6)
+Reg ERROR        5 bits val 3      (0x3) Reg COUNTER      8 bits val 7      (0x7)
+Reg ERROR        5 bits val 9      (0x9) Reg COUNTER      8 bits val 7      (0x7)
 ======       Ended execution      ======
 Program data :
    0 A0 15 D0

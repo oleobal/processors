@@ -11,7 +11,7 @@ class V16alpha(Processor)  :
 	 - a stack with automatic operation (eg no manual counter)
 	 - an IO 16-bits register presumably connected to a bus
 	   (behaves like the internal register, but can be set by outside forces)
-	 - an 8-bit register for status/error codes
+	 - a 5-bit register for status/error codes
 	"""
 	
 
@@ -52,7 +52,7 @@ class V16alpha(Processor)  :
 		self.stackPointer = Register(4, name="STACK")
 		self.stack = bytearray([0x00]*2**self.stackPointer.size)
 		self.io = Register(16, name="IO")
-		self.err = Register(8, name="ERROR")
+		self.err = Register(5, name="ERROR")
 		# TODO catch exceptions and put them here instead
 		
 		self.currentInstruction  = bytearray([0xFF]*V16alpha.INSTRUCTION_SIZE)
@@ -200,7 +200,7 @@ class V16alpha(Processor)  :
 				
 			except Exception:
 				if self.err.value == 2:
-					self.err.value = 255
+					self.err.value = 31
 				raise
 			if self.err.value in (3, 9):
 				return
