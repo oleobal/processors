@@ -48,7 +48,7 @@ You can use `POP` and `PUSH` for automatic operation, or `DLST` and
 
 ### Pinout
 
-<img src="./v16alpha_pinout.svg" width="100%" height="300">
+<img src="./v16alpha_pinout.svg" width="100%" height="500">
 
 (Alimentation/Ground pins not represented)
 
@@ -142,6 +142,8 @@ Machine code/operator table :
 | DSPR  |`0xA2`|
 | DLST  |`0xA3`|
 | DSST  |`0xA4`|
+| PUSH  |`0xA5`|
+| POP   |`0xA6`|
 |       |      |
 | ADD   |`0xB0`|
 |       |      |
@@ -163,8 +165,6 @@ Codes for registers :
 
 ### Loading a program
 
-*(to be implemented)*
-
 The V16alpha uses the I/O A register for loading instruction.
 
 Remember that machine code instructions are three bytes long. The processor can
@@ -173,18 +173,19 @@ hold 256 three-bytes instructions.
 To load an instruction :
  1. Set the first 8 pins of the I/O A bus to the index to put the instr at
  2. Set the last 8 pins of the same bus to the byte to write
- 3. Set the `P offset` pins to what the byte is :
-   1. (00) instruction
-   2. (01) first operand
-   3. (10) second operand 
- 4. Set the `Prog load` pin to 1
+ 3. Set the `Prog ctrl` pins to what the byte is :
+     1. (`00`) instruction
+     2. (`01`) first operand
+     3. (`10`) second operand 
+ 4. Set the `Prog load` pin to `1`
 
-A change in status of the program load/control pins will take effect at the end
-of the current instruction.
+The processor checks these pins each time it finishes an instruction (code `4`).
+The loading takes three cycles. The error code is set to `5` for the first cycle
+of the loading, after which it is set to `2` (like for any instruction).
 
 ### Running a program
 
-An idle processor (code 0) can be run by setting the `Prog load` and both
+An idle (code `0`) or finished (code `9`) processor can be run by setting the `Prog load` and both
 `Prog ctrl` pins to 1.
 
 
@@ -199,7 +200,7 @@ Available by checking `RERR`, a 4-bit register. Codes :
 | 2    | 2   | Executing                |
 | 3    | 3   | Skipped a 0xFF operator  |
 | 4    | 4   | Finished current instr   |
-|      |     |                          |
+| 5    | 5   | Started loading instr    |
 | 9    | 9   | Finished execution       |
 |      |     |                          |
 | 10   | A   | Invalid operation        |

@@ -58,9 +58,18 @@ class V16alpha(Processor)  :
 		# TODO catch exceptions and put them here instead
 		
 		self.pinset = Pinset(32, "V16alpha")
+		
 		self.clockPin = Pinset(1, "Clock")
+		def handleClockUp(self, clockPinset):
+			clockPinset.setPinState(0, False)
+			self.cycle()
+		self.clockPin.addSubscriber(self, handleClockUp, lambda x: x==[True], True)
+		
 		self.pinset.setSubset(0, self.clockPin)
 		self.pinset.setSubset(1, createLinkedPinsetFromReg(self.err))
+		
+		# prog load is not subscribed to because we only check it when an
+		# instruction is finished
 		self.progLoadPin = Pinset(1, "Prog load")
 		self.pinset.setSubset(5, self.progLoadPin)
 		self.progCtrlPin = Pinset(2, "Prog ctrl")
@@ -71,7 +80,6 @@ class V16alpha(Processor)  :
 		self.currentInstruction  = bytearray([0xFF]*V16alpha.INSTRUCTION_SIZE)
 		self.currentInstructionDecoded = None
 		self.currentInstructionState = 0
-	
 	
 		# translation table
 		# I could pull this automatically and stick it in the documentation,
@@ -143,6 +151,8 @@ class V16alpha(Processor)  :
 	
 	def loadProgram(self,code):
 		"""
+		DEBUG
+		
 		terminates current operations,
 		replaces self.program with the given code (after processing)
 		and resets programCounter to 0
@@ -190,6 +200,20 @@ class V16alpha(Processor)  :
 		self.currentInstructionState = V16alpha.operations[instruction[0]]
 		
 	
+	def loadInstrIntoProg(self):
+		"""
+		loads an instruction from IOA to program memory
+		"""
+		self.progLoadPin.setPinState(0, False)
+		addr = (self.ioa.value & 0xFF00) // 256
+		addr = addr*3 + getIntFromBoolList(self.progCtrlPin.state)
+		op   = self.ioa.value & 0x00FF
+		self.program[addr] = op
+		self.currentInstructionState = 3
+		self.err.value = 5
+		
+		
+	
 	def cycle(self):
 		"""
 		One processor cycle.
@@ -203,6 +227,12 @@ class V16alpha(Processor)  :
 		
 		
 		if self.currentInstructionState == 0:
+			# check whether we are to load instructions
+			if self.progLoadPin.getPinState(0) == True:
+				self.loadInstrIntoProg()
+				return
+
+
 			try:
 				if self.err.value != 0:
 					self.programCounter.value+=1
@@ -220,6 +250,11 @@ class V16alpha(Processor)  :
 		
 		self.currentInstructionState-=1
 		if self.currentInstructionState > 0 :
+			return
+			
+		# execution not started
+		if self.currentInstructionDecoded == None :
+			self.err.value = 0
 			return
 		
 		instruction = self.currentInstructionDecoded

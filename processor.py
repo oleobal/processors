@@ -69,8 +69,22 @@ class Pinset:
 		self.pins = [False]*numberOfPins
 		# registers to change when this changes
 		self.registers = []
+		
+		self.subscribers=[]
 	
 
+	
+	def addSubscriber(self, object, functionToExecute, testFunction=lambda x:True, passPinset=False):
+		"""
+		:param functionToExecute: pointer to a function to be executed when the
+		                          state of this changes
+		:param testFunction: is passed the state, and the functionToExecute
+		                     is only called if it returns true
+							 
+		:param passPinset: whether to pass a pointer to this pinset to the func
+		"""
+		self.subscribers.append((object, functionToExecute, testFunction, passPinset))
+	
 	def setSubset(self, index, set):
 		"""
 		replace a number of pins by another Pinset
@@ -96,6 +110,13 @@ class Pinset:
 			self.pins[index][0].setPinState(self.pins[index][1], newState)
 		for r in self.registers:
 			r.value = getIntFromBoolList(self.state)
+		for s in self.subscribers:
+			if s[2](self.state):
+				if (s[3]):
+					s[1](s[0],self)
+				else:
+					s[1](s[0])
+			
 	
 	def getPinState(self, index):
 		"""
