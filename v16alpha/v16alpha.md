@@ -4,18 +4,25 @@ V16α processor (V16alpha)
 The V16alpha is a general-purpose 16 bit processor that lacks all the
 features you would wish, and has all sorts of things you wish it didn't.
 
+It most notably has an internal program memory (for up to 256 instructions),
+allowing the full use of its 24 I/O pins. (instructions can still be fetched,
+of course).
+
 
 ### Facilities
 
 The following registers are provided :
 
  - `RINT` (internal), general purpose, used for arithmetic (16 bits)
- - `RINO` (input/output), supposed to be connected to a bus (16 bits)
+ - `RIOA` (input/output), supposed to be connected to a bus (16 bits)
+   `RIOA` is also used for program loading.
+ - `RIOB` (input/output), supposed to be connected to a bus (8 bits)
+ - `RINO` redirects to RIOA
  
 In addition, other registers are used for operation of mostly automatic
 components :
  
- - `RERR` (error), set by the processor during operation (5 bits)
+ - `RERR` (error), set by the processor during operation (4 bits)
  - `RCNT` (counter), pointing to the current instructions (8 bits)
  - `RSTA` (stack), pointing to the current stack level (4 bits)
 
@@ -41,20 +48,41 @@ You can use `POP` and `PUSH` for automatic operation, or `DLST` and
 
 ### Pinout
 
-*(to be implemented)*
-
 <img src="./v16alpha_pinout.svg" width="100%" height="300">
 
+(Alimentation/Ground pins not represented)
 
 | No  | Name    | Description                                 |
 |-----|---------|---------------------------------------------|
-| 0   |Clock    | Front (1) triggers cycle (proc resets to 0) |
-|1-5  |Error    | Exposes the status code (read only)         |
-|6-7  |P ld ctrl| Controls the loading of a program           |
-|8-15 |Prog load| Data transfer for loading a program         |
-|16-31| I/O     | Read/write the proc's I/O register          |
-|32   | Alim    | Set to logic 1                              |
-|33   | Ground  | Set to logic 0                              |
+| 1   |Clock    | Front (1) triggers cycle (proc resets to 0) |
+|2-5  |Error    | Exposes the status code (read only)         |
+|6    |Prog load| Order the loading of an instruction         |
+|7-8  |P offset | Control where a loaded instruction is set   |
+|9-16 | I/O B   | Read/write the proc's I/O B register        |
+|17-32| I/O A   | R/W the proc's I/O A register, load programs|
+
+Important : Pins are numbered 1-32 here, but they might be 0-indexed in some
+applications, so remember to check.
+
+```
+// pinset description
+# title
+V16alpha
+# top ; mark
+# end
+
+< Clock
+# red
+4x > Error
+# end
+1x < Prog load
+2x < P offset
+# blue
+8x <> I/O_B
+# green
+16x <> I/O_A
+```
+
 
 ### Assembly
 
@@ -130,37 +158,39 @@ Codes for registers :
 | RINO     |`0xD2`|
 | RCNT     |`0xD3`|
 | RSTA     |`0xD4`|
+| RIOA     |`0xD5`|
+| RIOB     |`0xD6`|
 
 ### Loading a program
 
 *(to be implemented)*
 
-The V16alpha presents 8 pins for transferring programs, plus 2 control pins.
+The V16alpha uses the I/O A register for loading instruction.
 
-The two control pins are read/write and present :
+Remember that machine code instructions are three bytes long. The processor can
+hold 256 three-bytes instructions.
 
-|Code| Status                   |
-|----|--------------------------|
-| 0  | Executing                |
-| 1  | Request for instruction  |
-| 2  | Please request new instr |
-| 3  | Execute order            |
+To load an instruction :
+ 1. Set the first 8 pins of the I/O A bus to the index to put the instr at
+ 2. Set the last 8 pins of the same bus to the byte to write
+ 3. Set the `P offset` pins to what the byte is :
+   1. (00) instruction
+   2. (01) first operand
+   3. (10) second operand 
+ 4. Set the `Prog load` pin to 1
 
- - The processor is on status `0` normally. When execution ends, it will switch
-these to `1`, requesting for new instructions. 
- - An outside force set the data pins for the next octet (instruction word).
- - The outside force then sets the control pins to either `2` or `3`.
- - If `2`, the processor will read the new data, write it at the current
-   pointer, and go back to `1`
- - If `3`, the processor will do as in the previous, but will immediately
-   execute the new program, back at `0`.
+A change in status of the program load/control pins will take effect at the end
+of the current instruction.
 
-(how.. how am I managing the fact that the counter only addresses 3 bytes
-  at a time ?)
-   
+### Running a program
+
+An idle processor (code 0) can be run by setting the `Prog load` and both
+`Prog ctrl` pins to 1.
+
+
 ### Status codes
 
-Available by checking `RERR`, an 8-bit register. Codes :
+Available by checking `RERR`, a 4-bit register. Codes :
 
 | Code | Hex | Status                   |
 |------|-----|--------------------------|
@@ -176,11 +206,4 @@ Available by checking `RERR`, an 8-bit register. Codes :
 | 11   | B   | Invalid operand          |
 | 12   | C   | Wrong number of operands |
 |      |     |                          |
-| 31   | 1F  | Other                    |
-
-
-
-
-
-
-
+| 15   | F   | Other                    |

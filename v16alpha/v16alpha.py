@@ -51,17 +51,26 @@ class V16alpha(Processor)  :
 		self.register = Register(16, name="INTERNAL")
 		self.stackPointer = Register(4, name="STACK")
 		self.stack = bytearray([0x00]*2**self.stackPointer.size)
-		self.io = Register(16, name="IO")
-		self.err = Register(5, name="ERROR")
+		self.ioa = Register(16, name="I/O A")
+		self.iob = Register(8,  name="I/O B")
+		self.io = self.ioa
+		self.err = Register(4, name="ERROR")
 		# TODO catch exceptions and put them here instead
+		
+		self.pinset = Pinset(32, "V16alpha")
+		self.clockPin = Pinset(1, "Clock")
+		self.pinset.setSubset(0, self.clockPin)
+		self.pinset.setSubset(1, createLinkedPinsetFromReg(self.err))
+		self.progLoadPin = Pinset(1, "Prog load")
+		self.pinset.setSubset(5, self.progLoadPin)
+		self.progCtrlPin = Pinset(2, "Prog ctrl")
+		self.pinset.setSubset(6, self.progCtrlPin)
+		self.pinset.setSubset(8, createLinkedPinsetFromReg(self.iob))
+		self.pinset.setSubset(16, createLinkedPinsetFromReg(self.ioa))
 		
 		self.currentInstruction  = bytearray([0xFF]*V16alpha.INSTRUCTION_SIZE)
 		self.currentInstructionDecoded = None
-		# meant to keep a number of the state of each instruction in the
-		# queue, to see at what state they are in
 		self.currentInstructionState = 0
-		# removed the queue mechanism.. Maybe in a next gveneration.
-		# I want this to be more realistic
 	
 	
 		# translation table
@@ -88,6 +97,8 @@ class V16alpha(Processor)  :
 			0xD2:self.io,
 			0xD3:self.programCounter,
 			0xD4:self.stackPointer,
+			0xD5:self.ioa,
+			0xD6:self.iob,
 			
 			
 			0xFF:0xFF
@@ -167,7 +178,7 @@ class V16alpha(Processor)  :
 			self.err.value = 11
 			raise
 		except Exception as e:
-			self.err.value = 255 # dreaded
+			self.err.value = 15 # dreaded
 			raise
 		
 		if instruction[0] not in V16alpha.operations:
@@ -200,7 +211,7 @@ class V16alpha(Processor)  :
 				
 			except Exception:
 				if self.err.value == 2:
-					self.err.value = 31
+					self.err.value = 15
 				raise
 			if self.err.value in (3, 9):
 				return
