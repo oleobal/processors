@@ -73,6 +73,7 @@ class V16alpha(Processor)  :
 		self.progLoadPin = Pinset(1, "Prog load")
 		self.pinset.setSubset(5, self.progLoadPin)
 		self.progCtrlPin = Pinset(2, "Prog ctrl")
+		
 		self.pinset.setSubset(6, self.progCtrlPin)
 		self.pinset.setSubset(8, createLinkedPinsetFromReg(self.iob))
 		self.pinset.setSubset(16, createLinkedPinsetFromReg(self.ioa))
@@ -81,6 +82,8 @@ class V16alpha(Processor)  :
 		self.currentInstructionDecoded = None
 		self.currentInstructionState = 0
 	
+		self.resetState = 5
+		
 		# translation table
 		# I could pull this automatically and stick it in the documentation,
 		# yes.. But it wouldn't be in line with the spirit of the whole
@@ -229,9 +232,30 @@ class V16alpha(Processor)  :
 		if self.currentInstructionState == 0:
 			# check whether we are to load instructions
 			if self.progLoadPin.getPinState(0) == True:
-				self.loadInstrIntoProg()
+				if self.progCtrlPin.state == [True, True]:
+					self.resetState-=1
+					self.programCounter.value = 0
+					self.err.value = 0
+					if self.resetState == 0:
+						
+						self.program = bytearray([0xFF]*2**V16alpha.INSTRUCTION_ADDRESSING_SIZE*V16alpha.INSTRUCTION_SIZE)
+						self.stack = bytearray([0x00]*2**self.stackPointer.size)
+						self.stackPointer.value = 0
+						self.register.value = 0
+						self.ioa.value = 0
+						self.iob.value = 0
+						self.cycleCount = 0
+						self.pinset.state = [False]*32
+						
+					
+				else:
+					self.resetState = 5
+					self.loadInstrIntoProg()
+				self.progLoadPin.setPinState(0, False)
+				self.progCtrlPin.state = [False, False]
 				return
-
+			
+			self.resetState = 5
 
 			try:
 				if self.err.value != 0:

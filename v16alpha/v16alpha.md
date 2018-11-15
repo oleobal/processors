@@ -183,11 +183,25 @@ The processor checks these pins each time it finishes an instruction (code `4`).
 The loading takes three cycles. The error code is set to `5` for the first cycle
 of the loading, after which it is set to `2` (like for any instruction).
 
-### Running a program
+The `Prog load` and `Prog ctrl` pins are all set to `0` after reading.
 
-An idle (code `0`) or finished (code `9`) processor can be run by setting the `Prog load` and both
-`Prog ctrl` pins to 1.
+### Running and resetting
 
+Cycling the processor when `Prog load` is at `0` will execute instructions.
+
+Cycling when the error code is `9` (finished execution) will automatically
+reset the program counter to 0 before continuing execution.
+
+Setting the `Prog load` and both `Prog ctrl` pins to 1 (checked when an
+instruction is finished) will reset the program counter and the error code
+to `0`. No further development happens that cycle.
+
+Once the fifth consecutive cycle in that state is reached, the processor is
+entirely reset (cycle count, pins, registers, stack, and program memory),
+a process taking 1 cycle.
+
+The `Prog load` and `Prog ctrl` pins are all set to `0` after reading. Do set
+them back up to `1` for resetting.
 
 ### Status codes
 
