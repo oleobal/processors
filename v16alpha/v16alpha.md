@@ -97,22 +97,28 @@ Lines starting with `#` are comments, and not parsed.
 
 Operations :
 
-|  OP   | operand 1 | operand 2 | Description                 | Cost |
-|-------|-----------|-----------|-----------------------------|------|
-| STORE | value/reg | reg       | Store op1 in op2            | 2    |
-| DLPR  | value/reg | reg       | Load program[op1] to op2    | 3    |
-| DSPR  | value/reg | value/reg | Store op1 to program[op2]   | 3    |
-| DLST  | value/reg | reg       | Load stack[op1] to op2      | 3    |
-| DSST  | value/reg | value/reg | Store op1 to stack[op2]     | 3    |
-| PUSH  | value/reg |           | Push a value onto the stack | 2    |
-| POP   | reg       |           | Pop the topmost value       | 2    |
-|       |           |           |                             |      |
-| ADD   | value/reg | reg       | Add op1 to op2 in op2       | 2    |
-|       |           |           |                             |      |
-| END   |           |           | End execution               | 1    |
+|  OP   | operand 1 | operand 2 | Description                           | Cost |
+|-------|-----------|-----------|---------------------------------------|------|
+| STORE | value/reg | reg       | Store op1 in op2                      | 2    |
+| DLPR  | value/reg | reg       | Load program[op1] to op2              | 3    |
+| DSPR  | value/reg | value/reg | Store op1 to program[op2]             | 3    |
+| DLST  | value/reg | reg       | Load stack[op1] to op2                | 3    |
+| DSST  | value/reg | value/reg | Store op1 to stack[op2]               | 3    |
+| PUSH  | value/reg |           | Push a value onto the stack           | 2    |
+| POP   | reg       |           | Pop the topmost value                 | 2    |
+| LABEL | value     |           | (skipped) set instr label             | 1    |
+| JUMP  | value     |           | Jump to label of value [op1]          | 1+X  |
+|       |           |           |                                       |      |
+| ADD   | value/reg | reg       | Add op1 to op2 in op2                 | 2    |
+|       |           |           |                                       |      |
+| END   |           |           | End execution                         | 1    |
 
 Costs in number of cycles. When a register is specified instead of a
 literal value, its value is used.
+
+**Jumping :** The current behavior of the `JUMP` instruction is to set `RCNT` to
+`0` and increment it until a label with the right value is found. Execution
+time thus varies.
 
 #### Assembler instructions
 
@@ -176,6 +182,8 @@ Machine code/operator table :
 | DSST  |`0xA4`|
 | PUSH  |`0xA5`|
 | POP   |`0xA6`|
+| LABEL |`0xA7`|
+| JUMP  |`0xA8`|
 |       |      |
 | ADD   |`0xB0`|
 |       |      |

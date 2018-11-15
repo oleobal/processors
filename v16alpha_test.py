@@ -22,7 +22,7 @@ def loadProgram(processor, asm, verbose=False):
 	for i in prog:
 		if verbose:
 			b="{:0>16}".format(bin(opIndex*256 + i)[2:])
-			print("{:0>2}".format(hex(i)[2:].upper()), opIndex, opOperand, b[:8], b[8:])
+			print("{:0>2}".format(hex(i)[2:].upper()), "{:>3}".format(opIndex), opOperand, b[:8], b[8:])
 		ioaPinset.state = opIndex*256 + i
 		progCtrlPinset.state = opOperand
 		
@@ -40,7 +40,7 @@ def loadProgram(processor, asm, verbose=False):
 		printByteArray(p.program, groupBytesBy=3, name="Program data")
 		print("Cycles :",p.cycleCount)
 
-def run (processor, verbose=False):
+def run (processor, verbose=False, safety=None):
 	p = processor
 	
 	if verbose:	
@@ -51,6 +51,14 @@ def run (processor, verbose=False):
 		p.pinset.setPinState(0,True)
 		if verbose:
 			print(p.err, p.programCounter)
+			
+		if (safety is not None):
+			safety-=1
+			if (safety==0):
+				print("Interrupted due to safety")
+				break
+		
+		
 	if verbose:
 		print("Cycles :",p.cycleCount)
 		print("-"*nbEqSigns+"       Ended execution      "+"-"*nbEqSigns)
@@ -164,8 +172,41 @@ END"""
 	run(p, verbose)
 	
 	
+def testDynamicJump(p, verbose=False):
+	if (verbose):
+		print("="*nbEqSigns+"        DynamicJump        "+"="*nbEqSigns)
+	
+	asm="""
+		STORE 1 RIOB
+		LABEL 0
+		store 2 RIOB
+		JUMP 14
+		LABEL 121
+		store 3 RIOB
+		END
+		LABEL 14
+		store 4 RIOB
+		END
+		LABEL 23
+		store 5 RIOB
+		END
+		"""
+	loadProgram(p, asm, verbose)
+	run(p, verbose, safety=100)
+	
+	if verbose:
+		print(p.pinset)
+	
+	# RIOB = 4
+	assert(p.pinset.getPinState(8)  == False)
+	assert(p.pinset.getPinState(9)  == False)
+	assert(p.pinset.getPinState(10) == False)
+	assert(p.pinset.getPinState(11) == False)
+	assert(p.pinset.getPinState(12) == False)
+	assert(p.pinset.getPinState(13) == True)
+	assert(p.pinset.getPinState(14) == False)
+	assert(p.pinset.getPinState(15) == False)
 		
-
 if __name__ == '__main__' :
 	verbose = False
 	from sys import argv
@@ -178,4 +219,7 @@ if __name__ == '__main__' :
 	reset(p)
 	
 	testConstantAndStaticLabels(p, verbose)
+	reset(p)
+	
+	testDynamicJump(p, True)
 	reset(p)

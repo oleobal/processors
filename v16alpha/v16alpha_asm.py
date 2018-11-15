@@ -8,6 +8,8 @@ conversionTable={
 	"DSST" :0xA4,
 	"PUSH" :0xA5,
 	"POP"  :0xA6,
+	"LABEL":0xA7,
+	"JUMP" :0xA8,
 	
 	"ADD"  :0xB0,
 	
@@ -18,6 +20,8 @@ conversionTable={
 	"RINO":0xD2,
 	"RCNT":0xD3,
 	"RSTA":0xD4,
+	"RIOA":0xD5,
+	"RIOB":0xD6,
 }
 
 INSTRUCTION_SIZE = 3

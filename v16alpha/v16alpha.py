@@ -28,6 +28,8 @@ class V16alpha(Processor)  :
 	"DSST" :3,
 	"PUSH" :2,
 	"POP"  :2,
+	"LABEL":1,
+	"JUMP" :1,
 
 	"ADD"  :2,
 	
@@ -83,6 +85,7 @@ class V16alpha(Processor)  :
 		self.currentInstructionState = 0
 	
 		self.resetState = 5
+		self.labelSeek = -1 # -1 if no label is being jumped to
 		
 		# translation table
 		# I could pull this automatically and stick it in the documentation,
@@ -98,6 +101,8 @@ class V16alpha(Processor)  :
 			0xA4:"DSST",
 			0xA5:"PUSH",
 			0xA6:"POP",
+			0xA7:"LABEL",
+			0xA8:"JUMP",
 			
 			0xB0:"ADD",
 			
@@ -222,12 +227,14 @@ class V16alpha(Processor)  :
 		One processor cycle.
 		"""
 		self.cycleCount += 1
-		
+
 		if self.err.value == 9:
 			# starting execution back from the top
 			self.programCounter.value = 0
 			
 		
+		if self.currentInstructionState < 0:
+			raise Exception("Grave instruction processing failure")
 		
 		if self.currentInstructionState == 0:
 			# check whether we are to load instructions
@@ -278,7 +285,15 @@ class V16alpha(Processor)  :
 		op = instruction[0]
 		
 		
-		if op == 0xFF:
+		if (self.labelSeek >= 0):
+			if op == "LABEL" and instruction[1] == self.labelSeek :
+				self.labelSeek = -1
+			else:
+				self.err.value=3
+				return
+				
+		
+		elif op == 0xFF or op == "LABEL" :
 			self.err.value=3
 			return
 
@@ -298,11 +313,13 @@ class V16alpha(Processor)  :
 				a = t1.value
 			
 			
+			
 			try:
 				t2.value = a
 			except Exception:
 				self.err.value = 11
 				return
+				
 
 		elif op in ("DLPR", "DLST") :
 			if len(instruction) != 3:
@@ -367,7 +384,13 @@ class V16alpha(Processor)  :
 			else:
 				self.err.value=12
 				return
-			
+		
+		elif op == "JUMP":
+			if len(instruction) != 2:
+				self.err.value = 12
+				return
+			self.labelSeek = instruction[1]
+				
 
 		elif op == "ADD":
 			if len(instruction) != 3:
