@@ -6,32 +6,23 @@ from v16alpha.v16alpha import V16alpha
 
 from v16alpha.v16alpha_asm import *
 
+nbEqSigns = 20
 
-def testV16alpha():
-	
-	nbEqSigns = 20
-	
-	p = V16alpha()
-	print(p.err)
-	print(p.register)
-	prog = assemble("""\
-STORE 21 RINT
-# cannot write 0xCF, have to compute it
-PUSH 157
-POP RINO
-ADD 50 RINO
-DSPR RINO RINT""")
-	#p.loadProgram(prog)
-	#p.loadProgram(bytes([0xA0, 0x0A, 0xD0, 0xFF,0xFF,0xFF,0xCF,0xFF,0xFF]))
-	printByteArray(prog, groupBytesBy=3, name="Assembled program")
-	print("="*nbEqSigns+"       Loading program      "+"="*nbEqSigns)
+def loadProgram(processor, asm, verbose=False):
+	p = processor
+	prog = assemble(asm)
+	if verbose:
+		printByteArray(prog, groupBytesBy=3, name="Assembled program")
+		print("-"*nbEqSigns+"       Loading program      "+"-"*nbEqSigns)
+		
 	opIndex=0
 	opOperand=0
 	progCtrlPinset = p.pinset.pins[6][0]
 	ioaPinset = p.pinset.pins[31][0]
 	for i in prog:
-		b="{:0>16}".format(bin(opIndex*256 + i)[2:])
-		print(hex(i)[2:].upper(), opIndex, opOperand, b[:8], b[8:])
+		if verbose:
+			b="{:0>16}".format(bin(opIndex*256 + i)[2:])
+			print("{:0>2}".format(hex(i)[2:].upper()), opIndex, opOperand, b[:8], b[8:])
 		ioaPinset.state = opIndex*256 + i
 		progCtrlPinset.state = opOperand
 		
@@ -43,36 +34,148 @@ DSPR RINO RINT""")
 		opOperand%=3
 		if opOperand == 0:
 			opIndex+=1
-			print()
+			if verbose:
+				print()
+	if verbose:	
+		printByteArray(p.program, groupBytesBy=3, name="Program data")
+		print("Cycles :",p.cycleCount)
+
+def run (processor, verbose=False):
+	p = processor
 	
-	printByteArray(p.program, groupBytesBy=3, name="Program data")
-	print("Cycles :",p.cycleCount)
-	print("="*nbEqSigns+"     Starting execution     "+"="*nbEqSigns)
+	if verbose:	
+		print("-"*nbEqSigns+"     Starting execution     "+"-"*nbEqSigns)
 	
 	while (p.err.value < 9):
 		#p.cycle()
 		p.pinset.setPinState(0,True)
-		print(p.err, p.programCounter)
-	print("="*nbEqSigns+"       Ended execution      "+"="*nbEqSigns)
-	printByteArray(p.program, groupBytesBy=3, name="Program data")
-	print(p.register)
-	print(p.io)
-	print(p.pinset)
-	print("Cycles :",p.cycleCount)
-	print("="*nbEqSigns+"          Resetting         "+"="*nbEqSigns)
+		if verbose:
+			print(p.err, p.programCounter)
+	if verbose:
+		print("Cycles :",p.cycleCount)
+		print("-"*nbEqSigns+"       Ended execution      "+"-"*nbEqSigns)
+	
+	
+def reset(p, verbose=False):
+	if verbose:
+		print("-"*nbEqSigns+"          Resetting         "+"-"*nbEqSigns)
+	
 	for j in range(5):
 		p.pinset.setPinState(5,True)
 		p.pinset.setPinState(6,True)
 		p.pinset.setPinState(7,True)
 		p.pinset.setPinState(0,True)
-	printByteArray(p.program, groupBytesBy=3, name="Program data")
-	print(p.register)
-	print(p.pinset)
-	print("Cycles :",p.cycleCount)
+
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+def testBasicAndReset(p, verbose=False):
+	if (verbose):
+		print("="*nbEqSigns+"       BasicAndReset        "+"="*nbEqSigns)
+	if verbose:
+		print(p.err)
+		print(p.register)
+	asm="""\
+STORE 21 RINT
+# cannot write 0xCF, have to compute it
+PUSH 157
+POP RINO
+ADD 50 RINO
+DSPR RINO RINT"""
+	loadProgram(p, asm, verbose)
+	run(p, verbose)
+	
+	if verbose:
+		printByteArray(p.program, groupBytesBy=3, name="Program data")
+		print(p.register)
+		print(p.io)
+		print(p.pinset)
+	
+	assert p.program[21] == 0xCF
+	assert p.err.value == 9
+	
+	reset(p,verbose)
+	
+	assert p.program == bytearray([0xFF]*2**V16alpha.INSTRUCTION_ADDRESSING_SIZE*V16alpha.INSTRUCTION_SIZE)
+	assert p.pinset.state == [False]*32
+	assert p.err.value == 0
 	
 	
+	if verbose:
+		printByteArray(p.program, groupBytesBy=3, name="Program data")
+		print(p.register)
+		print(p.pinset)
+		print("Cycles :",p.cycleCount)
 
+	
+	
+	
+	
+def testConstantAndStaticLabels(p, verbose=False):
+	if (verbose):
+		print("="*nbEqSigns+"  ConstantAndStaticLabels   "+"="*nbEqSigns)
 
+	# by hand
+	asm1 ="""\
+STORE 5 RINT
+STORE RINT RCNT
+
+PUSH 1 # these stack ops will be skipped
+POP RINO
+PUSH 1
+POP RINO
+
+END"""
+	# with constants
+	asm2 ="""\
+:CONST lol 5
+STORE :lol RINT
+STORE RINT RCNT
+PUSH 1
+POP  RINO
+PUSH 1
+ POP RINO
+END"""
+	# with static label
+	asm3 ="""\
+STORE :endline RINT
+STORE  RINT    RCNT
+PUSH 1
+POP RINO
+PUSH 1
+:endline: POP RINO
+END"""
+	prog1 = assemble(asm1)
+	prog2 = assemble(asm2)
+	prog3 = assemble(asm3)
+	assert prog1 == prog2 and prog2 == prog3
+	
+	loadProgram(p, asm3, verbose)
+	run(p, verbose)
+	
+	
+		
 
 if __name__ == '__main__' :
-	testV16alpha()
+	verbose = False
+	from sys import argv
+	if "-v" in argv:
+		verbose = True
+	
+	p = V16alpha()
+	
+	testBasicAndReset(p, verbose)
+	reset(p)
+	
+	testConstantAndStaticLabels(p, verbose)
+	reset(p)

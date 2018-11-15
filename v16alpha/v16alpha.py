@@ -238,14 +238,7 @@ class V16alpha(Processor)  :
 					self.err.value = 0
 					if self.resetState == 0:
 						
-						self.program = bytearray([0xFF]*2**V16alpha.INSTRUCTION_ADDRESSING_SIZE*V16alpha.INSTRUCTION_SIZE)
-						self.stack = bytearray([0x00]*2**self.stackPointer.size)
-						self.stackPointer.value = 0
-						self.register.value = 0
-						self.ioa.value = 0
-						self.iob.value = 0
-						self.cycleCount = 0
-						self.pinset.state = [False]*32
+						self.__init__()
 						
 					
 				else:

@@ -114,12 +114,44 @@ Operations :
 Costs in number of cycles. When a register is specified instead of a
 literal value, its value is used.
 
-Operation ends either on fatal error (check `RERR`), on `END`
-instruction, or when reaching the end of the program table
-(both produce error code `9`).
+#### Assembler instructions
 
-Running the processor when it is on error code `9` automatically resets
-the program counter to `0`.
+The assembler works in two passes : it first removes comment, strip code, and
+interpret assembly instructions ; then, it goes through the code again, 
+performing substitutions and generating machine code.
+
+Assembler instructions start with a `:`.
+
+`:CONST <name> <value>` defines the `<name>` constant to `<value>`. `<value>`
+can be any valid word (literal, instruction, register..).
+
+Then, the constant can be written in code prefixed by a `:`.
+Unlike normal assemblye, *constant names are case-sensitive*.
+
+This example has a total length of 1 instruction in machine code, as the
+constant definition and substitution is performed before generating the code.
+```
+:CONST Hello 100
+PUSH :Hello
+# yields :
+# A5 64 FF
+```
+
+There is a special syntax for declaring a constant that takes as value the
+number (0-indexed) of the instruction is precedes :
+```
+STORE :name RIOA # writes `2` to RIOA 
+PUSH 100
+:name: POP RINT
+END
+```
+This special syntax creates an empty line after it (all `0xFF`) if there are no
+instructions on the same line.
+
+
+*Tips and Tricks :* You may then use `STORE :name: RCNT` to write the value to
+the program counter and jump there statically, although watch out: the program
+counter will automatically increment after `STORE` finishes.
 
 ### Machine code
 
@@ -185,12 +217,18 @@ of the loading, after which it is set to `2` (like for any instruction).
 
 The `Prog load` and `Prog ctrl` pins are all set to `0` after reading.
 
-### Running and resetting
+### Running
 
 Cycling the processor when `Prog load` is at `0` will execute instructions.
 
+Operation ends either on fatal error (check `RERR`), on `END`
+instruction, or when reaching the end of the program table
+(both produce error code `9`).
+
 Cycling when the error code is `9` (finished execution) will automatically
 reset the program counter to 0 before continuing execution.
+
+#### Resetting
 
 Setting the `Prog load` and both `Prog ctrl` pins to 1 (checked when an
 instruction is finished) will reset the program counter and the error code

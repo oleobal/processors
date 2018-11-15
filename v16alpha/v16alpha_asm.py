@@ -29,20 +29,56 @@ def assemble(assembly, sizeWarning=256):
 	:param sizeWarning: issue a warning if the generated code is bigger
 	                    set to None to disable
 	"""
-	output = bytearray()
+	
+	constants={}
+	sanitizedAssembly=[]
+	# first hunt for assembler instructions
+	# and sanitize code
+	lineno=0
 	for line in assembly.splitlines():
-		if line[0] == "#" :
+		line = line.strip()
+		if line == "" or line[0] == "#"  :
 			continue
+		try:
+			line = line[:line.index("#")]
+		except ValueError:
+			pass
+		
+		if line[0] != ":":
+			sanitizedAssembly.append(line.strip())
+			lineno+=1
+			continue
+		line = line[1:]
+		l = line.split()
+		if l[0].upper() == "CONST":
+			constants[l[1]] = l[2]
+		
+		# label
+		elif l[0][-1] == ":":
+			constants[l[0][:-1]] = str(lineno)
+			sanitizedAssembly.append(line[line.index(":")+1:].strip())
+			
+		else:
+			raise Exception("Assembler instruction without meaning: "+line[0])
+		
+		lineno+=1
+	
+	output = bytearray()
+	for line in sanitizedAssembly:
 		byteline = bytearray()
 		line = line.split()
 		for i in line :
-			if i in (conversionTable) :
-				byteline.append(conversionTable[i])
+			if i[0] == ":":
+				i = constants[i[1:]]
+				
+			if i.upper() in conversionTable :
+				byteline.append(conversionTable[i.upper()])
 			else:
 				i = int(i,0)
 				if i < 0x9F:
 					byteline.append(i)
-		#byteline.append([0xFF]*(INSTRUCTION_SIZE-len(byteline)))
+		
+		# padding
 		while len(byteline) < INSTRUCTION_SIZE:
 			byteline.append(0xFF)
 		output+=(byteline)
