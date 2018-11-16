@@ -12,6 +12,10 @@ conversionTable={
 	"JUMP" :0xA8,
 	
 	"ADD"  :0xB0,
+	"REM"  :0xB1,
+	"MUL"  :0xB2,
+	"DIV"  :0xB3,
+	"MODU" :0xB4,
 	
 	"END"  :0xCF,
 	
@@ -82,6 +86,10 @@ def assemble(assembly, sizeWarning=256):
 				if i < 0x9F:
 					byteline.append(i)
 		
+		# arithmetic instructions
+		if len(byteline) == 2 and 0xB0 <= byteline[0] <= 0xB4 :
+			byteline.append(0)
+			
 		# padding
 		while len(byteline) < INSTRUCTION_SIZE:
 			byteline.append(0xFF)

@@ -94,12 +94,12 @@ def testBasicAndReset(p, verbose=False):
 		print(p.err)
 		print(p.register)
 	asm="""\
-STORE 21 RINT
+STORE 21 RINO
 # cannot write 0xCF, have to compute it
 PUSH 157
-POP RINO
-ADD 50 RINO
-DSPR RINO RINT"""
+POP RINT
+ADD 50
+DSPR RINT RINO"""
 	loadProgram(p, asm, verbose)
 	run(p, verbose)
 	

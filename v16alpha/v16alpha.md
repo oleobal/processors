@@ -109,7 +109,11 @@ Operations :
 | LABEL | value     |           | (skipped) set instr label             | 1    |
 | JUMP  | value     |           | Jump to label of value [op1]          | 1+X  |
 |       |           |           |                                       |      |
-| ADD   | value/reg | reg       | Add op1 to op2 in op2                 | 2    |
+| ADD   | value/reg | value/reg | (op2) optional                        | 2    |
+| REM   | value/reg | value/reg | (op2) optional                        | 2    |
+| MUL   | value/reg | value/reg | (op2) optional                        | 3    |
+| DIV   | value/reg | value/reg | (op2) optional                        | 3    |
+| MODU  | value/reg | value/reg | (op2) optional                        | 2    |
 |       |           |           |                                       |      |
 | END   |           |           | End execution                         | 1    |
 
@@ -119,6 +123,17 @@ literal value, its value is used.
 **Jumping :** The current behavior of the `JUMP` instruction is to set `RCNT` to
 `0` and increment it until a label with the right value is found. Execution
 time thus varies.
+
+#### Arithmetic operations
+
+`ADD`, `REM`, `MUL`, `DIV` and `MODU` all operate on `RINT` and can have
+either one or two operands.
+
+If they have one operand, then the value of `RINT` becomes
+(the value of `RINT` `operation` `operand`).
+
+If they have two operands, the value of `RINT` becomes
+(`operand 1` `operation` `operand 2`).
 
 #### Assembler instructions
 
@@ -203,6 +218,13 @@ Codes for registers :
 | RIOA     |`0xD5`|
 | RIOB     |`0xD6`|
 
+#### A note on arithmetic instructions
+
+Arithmetic instructions can have one or two operands in assembly. In machine
+code, if the second operand is `0`, it's interpreted as being an operation on
+the register itself.
+
+
 ### Loading a program
 
 The V16alpha uses the I/O A register for loading instruction.
@@ -266,5 +288,6 @@ Available by checking `RERR`, a 4-bit register. Codes :
 | 10   | A   | Invalid operation        |
 | 11   | B   | Invalid operand          |
 | 12   | C   | Wrong number of operands |
+| 13   | D   | Arithmetic problem       |
 |      |     |                          |
 | 15   | F   | Other                    |

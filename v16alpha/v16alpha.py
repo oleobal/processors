@@ -32,9 +32,13 @@ class V16alpha(Processor)  :
 	"JUMP" :1,
 
 	"ADD"  :2,
+	"REM"  :2,
+	"MUL"  :3,
+	"DIV"  :3,
+	"MODU" :2,
 	
 	"END"  :1,
-	   0xFF:1,
+	 0xFF  :1,
 	}
 	
 	errorCodes ={
@@ -105,6 +109,10 @@ class V16alpha(Processor)  :
 			0xA8:"JUMP",
 			
 			0xB0:"ADD",
+			0xB1:"REM",
+			0xB2:"MUL",
+			0xB3:"DIV",
+			0xB4:"MODU",
 			
 			0xCF:"END",
 			
@@ -392,20 +400,41 @@ class V16alpha(Processor)  :
 			self.labelSeek = instruction[1]
 				
 
-		elif op == "ADD":
-			if len(instruction) != 3:
-				self.err.value = 12
-				return
-			source = instruction[1]
-			target = instruction[2]
-			if type(source) is int:
-				a = source
-			elif type(source) is Register:
-				a = source.value
-			if type(target) is Register:
-				target.value += a
+		elif op in ["ADD", "REM", "MUL", "DIV", "MODU"]:
+			#breakpoint()
+			if len(instruction) == 3:
+				if type(instruction[1]) is int:
+					a = instruction[1]
+				elif type(instruction[1]) is Register:
+					a = instruction[1].value
+					
+				if type(instruction[2]) is int:
+					b = instruction[2]
+				elif type(instruction[2]) is Register:
+					b = instruction[2].value
 			else:
 				self.err.value = 12
+				return
+			
+			t = self.register
+			
+			if b==0 and type(instruction[2]) is int:
+				b = a
+				a = t.value
+			
+			try:
+				if op == "ADD":
+					t.value = a+b
+				elif op == "REM":
+					t.value = a-b
+				elif op == "MUL":
+					t.value = a*b
+				elif op == "DIV":
+					t.value = a//b
+				elif op == "MODU":
+					t.value = a%b
+			except Exception:
+				self.err.value = 13
 				return
 		
 		self.err.value = 4
