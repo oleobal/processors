@@ -179,15 +179,20 @@ def testDynamicJump(p, verbose=False):
 	asm="""
 		STORE 1 RIOB
 		LABEL 0
+		store 0x08 rioa
 		store 2 RIOB
 		JUMP 14
-		LABEL 121
+		LABEL 121 # will be skipped
+		store 0x0f rioa # if RIOA ends with 1111 skipping didn't work
 		store 3 RIOB
 		END
-		LABEL 14
+		0xFF
+		0xFF
+		0xFF
+		LABEL 14 # jump target
 		store 4 RIOB
 		END
-		LABEL 23
+		LABEL 23 # won't get executed
 		store 5 RIOB
 		END
 		"""
@@ -197,15 +202,7 @@ def testDynamicJump(p, verbose=False):
 	if verbose:
 		print(p.pinset)
 	
-	# RIOB = 4
-	assert(p.pinset.getPinState(8)  == False)
-	assert(p.pinset.getPinState(9)  == False)
-	assert(p.pinset.getPinState(10) == False)
-	assert(p.pinset.getPinState(11) == False)
-	assert(p.pinset.getPinState(12) == False)
-	assert(p.pinset.getPinState(13) == True)
-	assert(p.pinset.getPinState(14) == False)
-	assert(p.pinset.getPinState(15) == False)
+	assert(getIntFromBoolList(p.pinset.state) == 0b01001000000001000000000000001000)
 		
 if __name__ == '__main__' :
 	verbose = False
@@ -221,5 +218,5 @@ if __name__ == '__main__' :
 	testConstantAndStaticLabels(p, verbose)
 	reset(p)
 	
-	testDynamicJump(p, True)
+	testDynamicJump(p, verbose)
 	reset(p)

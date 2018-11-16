@@ -243,7 +243,7 @@ def printByteArray(array, groupBytesBy=8, name=None):
 	"""
 	Utility for printing byte arrays, in hexadecimal
 	:param array: the bytes() or bytearray()
-	:param groupBytesBy: will skip lines every (this) bytes
+	:param groupBytesBy: will feed lines every (this) bytes
 	:param name: will print that at the top
 	"""
 	if name != None:
@@ -265,7 +265,11 @@ def printByteArray(array, groupBytesBy=8, name=None):
 	sameThingLine = " "*(lineLength//4)+"[same]\n"
 	output = ""
 	
-	output += "{:>4}".format(outTable[0][0])
+	
+	maxLineNoDigits = max(2,len(str(len(outTable))))
+	maxByteNoDigits = max(2,len(str(len(outTable)*groupBytesBy)))
+	lineNoField = "{:<"+str(maxLineNoDigits)+"} {:>"+str(maxByteNoDigits)+"} "
+	output += lineNoField.format("0", outTable[0][0])
 	for j in outTable[0][1]:
 		output+=" {:0>2X}".format(j)
 	output+="\n"
@@ -274,7 +278,7 @@ def printByteArray(array, groupBytesBy=8, name=None):
 		if outTable[i][1] == outTable[i-1][1]:
 			output += sameThingLine
 		else:
-			output += "{:>4}".format(outTable[i][0])
+			output += lineNoField.format(i, outTable[i][0])
 			for j in outTable[i][1]:
 				output+=" {:0>2X}".format(j)
 			output+="\n"
