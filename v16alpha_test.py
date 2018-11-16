@@ -174,7 +174,7 @@ END"""
 	
 def testDynamicJump(p, verbose=False):
 	if (verbose):
-		print("="*nbEqSigns+"        DynamicJump        "+"="*nbEqSigns)
+		print("="*nbEqSigns+"         DynamicJump        "+"="*nbEqSigns)
 	
 	asm="""
 		STORE 1 RIOB
