@@ -91,7 +91,8 @@ Assembly for the V16alpha is a list of commands of the form :
 `<OP> [target or value] [target or value]`
 
 Values are in decimal or hexadecimal (prefixed with `0x`), from 0
-to 159. Targets are generally data units such as registers.
+to 159 (`0x9F`). Unless specifically stated, it is not possible to use literals
+over `9F`. Targets are generally data units such as registers.
 
 Lines starting with `#` are comments, and not parsed.
 
@@ -112,8 +113,11 @@ Operations :
 | ADD   | value/reg | value/reg | (op2) optional                        | 2    |
 | REM   | value/reg | value/reg | (op2) optional                        | 2    |
 | MUL   | value/reg | value/reg | (op2) optional                        | 3    |
-| DIV   | value/reg | value/reg | (op2) optional                        | 3    |
+| DIV   | value/reg | value/reg | (op2) optional ; result floored       | 3    |
 | MODU  | value/reg | value/reg | (op2) optional                        | 2    |
+| AND   | value/reg | value/reg | (op2) optional                        | 1    |
+| OR    | value/reg | value/reg | (op2) optional                        | 1    |
+| XOR   | value/reg | value/reg | (op2) optional                        | 1    |
 |       |           |           |                                       |      |
 | END   |           |           | End execution                         | 1    |
 
@@ -122,11 +126,11 @@ literal value, its value is used.
 
 **Jumping :** The current behavior of the `JUMP` instruction is to set `RCNT` to
 `0` and increment it until a label with the right value is found. Execution
-time thus varies.
+time thus varies depending on instruction number of the label.
 
 #### Arithmetic operations
 
-`ADD`, `REM`, `MUL`, `DIV` and `MODU` all operate on `RINT` and can have
+`ADD`, `REM`, `MUL`, `DIV`, and `MODU` all operate on `RINT` and can have
 either one or two operands.
 
 If they have one operand, then the value of `RINT` becomes
@@ -134,6 +138,12 @@ If they have one operand, then the value of `RINT` becomes
 
 If they have two operands, the value of `RINT` becomes
 (`operand 1` `operation` `operand 2`).
+
+Remember that, as usual, only literals up to `0x9F` are allowed.
+
+Bitwise operations `AND`, `OR` and `XOR` work the same way.
+
+**Tips and Tricks :** *XOR-ing a value with all 1's performs a negation.*
 
 #### Assembler instructions
 
@@ -170,9 +180,9 @@ This special syntax creates an empty line after it (all `0xFF`) if there are no
 instructions on the same line.
 
 
-*Tips and Tricks :* You may then use `STORE :name: RCNT` to write the value to
-the program counter and jump there statically, although watch out: the program
-counter will automatically increment after `STORE` finishes.
+**Tips and Tricks :** *You may then use `STORE :name: RCNT` to write the value
+to the program counter and jump there statically, although watch out: the
+program counter will automatically increment after `STORE` finishes.*
 
 ### Machine code
 
@@ -201,6 +211,13 @@ Machine code/operator table :
 | JUMP  |`0xA8`|
 |       |      |
 | ADD   |`0xB0`|
+| REM   |`0xB1`|
+| MUL   |`0xB2`|
+| DIV   |`0xB3`|
+| MODU  |`0xB4`|
+| AND   |`0xB5`|
+| OR    |`0xB6`|
+| XOR   |`0xB7`|
 |       |      |
 | END   |`0xCF`|
 

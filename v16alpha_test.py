@@ -203,7 +203,63 @@ def testDynamicJump(p, verbose=False):
 		print(p.pinset)
 	
 	assert(getIntFromBoolList(p.pinset.state) == 0b01001000000001000000000000001000)
-		
+
+
+
+def testArithmetic(p, verbose=False):
+	if (verbose):
+		print("="*nbEqSigns+"          Arithmetic        "+"="*nbEqSigns)
+	
+	if verbose:
+		print("-"*nbEqSigns+"             AND            "+"-"*nbEqSigns)
+	asm="""
+		STORE 0b01010101 RINT
+		AND   0b00001111
+		#       00000101
+		STORE RINT RIOB
+		END
+		"""
+	loadProgram(p, asm, verbose)
+	run(p, verbose, safety=100)
+	if verbose:
+		print(p.pinset)
+	assert(getIntFromBoolList(p.pinset.state) & 0x00FF0000 == 0b00001010000000000000000)
+	reset(p)
+	if verbose:
+		print("-"*nbEqSigns+"              OR            "+"-"*nbEqSigns)
+	asm="""
+		STORE 0b01010101 RINT
+		OR    0b00001111
+		#       01011111
+		STORE RINT RIOB
+		END
+		"""
+	loadProgram(p, asm, verbose)
+	run(p, verbose, safety=100)
+	if verbose:
+		print(p.pinset)
+
+	assert(getIntFromBoolList(p.pinset.state) & 0x00FF0000 == 0b010111110000000000000000)
+	reset(p)
+	
+	if verbose:
+		print("-"*nbEqSigns+"             XOR            "+"-"*nbEqSigns)
+	asm="""
+		STORE 0b01010101 RINT
+		XOR   0b00001111
+		#       01011010
+		STORE RINT RIOB
+		END
+		"""
+	loadProgram(p, asm, verbose)
+	run(p, verbose, safety=100)
+	if verbose:
+		print(p.pinset)
+	assert(getIntFromBoolList(p.pinset.state) & 0x00FF0000 == 0b010110100000000000000000)
+
+
+
+
 if __name__ == '__main__' :
 	verbose = False
 	from sys import argv
@@ -219,4 +275,7 @@ if __name__ == '__main__' :
 	reset(p)
 	
 	testDynamicJump(p, verbose)
+	reset(p)
+	
+	testArithmetic(p, verbose)
 	reset(p)

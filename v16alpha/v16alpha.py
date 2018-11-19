@@ -36,6 +36,9 @@ class V16alpha(Processor)  :
 	"MUL"  :3,
 	"DIV"  :3,
 	"MODU" :2,
+	"AND"  :1,
+	"OR"   :1,
+	"XOR"  :1,
 	
 	"END"  :1,
 	 0xFF  :1,
@@ -113,6 +116,9 @@ class V16alpha(Processor)  :
 			0xB2:"MUL",
 			0xB3:"DIV",
 			0xB4:"MODU",
+			0xB5:"AND",
+			0xB6:"OR",
+			0xB7:"XOR",
 			
 			0xCF:"END",
 			
@@ -400,7 +406,7 @@ class V16alpha(Processor)  :
 			self.labelSeek = instruction[1]
 				
 
-		elif op in ["ADD", "REM", "MUL", "DIV", "MODU"]:
+		elif op in ["ADD", "REM", "MUL", "DIV", "MODU", "AND", "OR", "XOR"]:
 			#breakpoint()
 			if len(instruction) == 3:
 				if type(instruction[1]) is int:
@@ -433,6 +439,12 @@ class V16alpha(Processor)  :
 					t.value = a//b
 				elif op == "MODU":
 					t.value = a%b
+				elif op == "AND" :
+					t.value = a&b
+				elif op == "OR" :
+					t.value = a|b
+				elif op == "XOR" :
+					t.value = a^b
 			except Exception:
 				self.err.value = 13
 				return

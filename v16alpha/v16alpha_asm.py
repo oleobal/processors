@@ -16,16 +16,19 @@ conversionTable={
 	"MUL"  :0xB2,
 	"DIV"  :0xB3,
 	"MODU" :0xB4,
+	"AND"  :0xB5,
+	"OR"   :0xB6,
+	"XOR"  :0xB7,
 	
 	"END"  :0xCF,
 	
-	"RINT":0xD0,
-	"RERR":0xD1,
-	"RINO":0xD2,
-	"RCNT":0xD3,
-	"RSTA":0xD4,
-	"RIOA":0xD5,
-	"RIOB":0xD6,
+	"RINT" :0xD0,
+	"RERR" :0xD1,
+	"RINO" :0xD2,
+	"RCNT" :0xD3,
+	"RSTA" :0xD4,
+	"RIOA" :0xD5,
+	"RIOB" :0xD6,
 }
 
 INSTRUCTION_SIZE = 3
@@ -87,7 +90,7 @@ def assemble(assembly, sizeWarning=256):
 					byteline.append(i)
 		
 		# arithmetic instructions
-		if len(byteline) == 2 and 0xB0 <= byteline[0] <= 0xB4 :
+		if len(byteline) == 2 and 0xB0 <= byteline[0] <= 0xB7 :
 			byteline.append(0)
 			
 		# padding
