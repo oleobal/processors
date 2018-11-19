@@ -48,6 +48,19 @@ class V16alpha(Processor)  :
 	
 	"END"  :1,
 	
+	
+	"LADD"  :2,
+	"LREM"  :2,
+	"LMUL"  :3,
+	"LDIV"  :3,
+	"LMODU" :2,
+	"LAND"  :1,
+	"LOR"   :1,
+	"LXOR"  :1,
+	"LSTORE":1,
+
+
+
 	 0xFF  :1,
 	}
 	
@@ -127,6 +140,7 @@ class V16alpha(Processor)  :
 			0xB6:"OR",
 			0xB7:"XOR",
 			
+			
 			0xC0:"IFEQ",
 			0xC1:"IFLT",
 			0xC2:"IFLE",
@@ -143,6 +157,15 @@ class V16alpha(Processor)  :
 			0xD5:self.ioa,
 			0xD6:self.iob,
 			
+			0xE0:"LADD",
+			0xE1:"LREM",
+			0xE2:"LMUL",
+			0xE3:"LDIV",
+			0xE4:"LMODU",
+			0xE5:"LAND",
+			0xE6:"LOR",
+			0xE7:"LXOR",
+			0xE8:"LSTORE",
 			
 			0xFF:0xFF
 		}
@@ -173,9 +196,14 @@ class V16alpha(Processor)  :
 		"""
 
 		op = self.machineCode[array[0]]
+		if op in ["JUMP", "LABEL", "LADD", "LREM", "LMUL", "LDIV", "LMODU", "LAND", "LOR", "LXOR", "LSTORE"]:
+			a = array[1]<<8
+			a +=array[2]
+			return [op, a]
 		t1 = self.machineCode[array[1]]
 		t2 = self.machineCode[array[2]]
-		
+	
+			
 		if t1 == 0xFF :
 			return [op]
 		
@@ -451,6 +479,7 @@ class V16alpha(Processor)  :
 					t.value = a//b
 				elif op == "MODU":
 					t.value = a%b
+				
 				elif op == "AND" :
 					t.value = a&b
 				elif op == "OR" :
@@ -460,6 +489,29 @@ class V16alpha(Processor)  :
 			except Exception:
 				self.err.value = 13
 				return
+		
+		# 2-byte ops
+		elif op in ["LSTORE", "LADD", "LREM", "LMUL", "LDIV", "LMODU", "LAND", "LOR", "LXOR"]:
+			if op == "LSTORE":
+				self.register.value = instruction[1]
+			if op == "LADD":
+				self.register.value += instruction[1]
+			if op == "LREM":
+				self.register.value -= instruction[1]
+			if op == "LMUL":
+				self.register.value *= instruction[1]
+			if op == "LDIV":
+				self.register.value //= instruction[1]
+			if op == "LMODU":
+				self.register.value %= instruction[1]
+			if op == "LAND":
+				self.register.value &= instruction[1]
+			if op == "LOR":
+				self.register.value |= instruction[1]
+			if op == "LXOR":
+				self.register.value ^= instruction[1]
+		
+		
 		
 		elif op in ["IFEQ", "IFLT", "IFLE", "IFGT", "IFGE"]:
 			if len(instruction) == 3:

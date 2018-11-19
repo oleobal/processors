@@ -35,6 +35,16 @@ conversionTable={
 	"RSTA" :0xD4,
 	"RIOA" :0xD5,
 	"RIOB" :0xD6,
+	
+	"LADD" :0xE0,
+	"LREM" :0xE1,
+	"LMUL" :0xE2,
+	"LDIV" :0xE3,
+	"LMODU":0xE4,
+	"LAND" :0xE5,
+	"LOR"  :0xE6,
+	"LXOR" :0xE7,
+	"LSTORE":0xE8
 }
 
 INSTRUCTION_SIZE = 3
@@ -119,8 +129,15 @@ def assemble(assembly, sizeWarning=256):
 				byteline.append(conversionTable[i.upper()])
 			else:
 				i = int(i,0)
-				if i < 0x9F:
+				if i <= 0xFF:
 					byteline.append(i)
+				elif i <= 0xFFFF:
+					byteline.append((i&0xFF00)>>8)
+					byteline.append( i&0x00FF)
+					# fill 2 bytes
+				else:
+					raise Exception("Literal over 0xFFFF : "+str(i))
+					
 		
 		# arithmetic instructions
 		if len(byteline) == 2 and 0xB0 <= byteline[0] <= 0xB7 :
@@ -129,6 +146,8 @@ def assemble(assembly, sizeWarning=256):
 		# padding
 		while len(byteline) < INSTRUCTION_SIZE:
 			byteline.append(0xFF)
+		if len(byteline) != 3:
+			raise Exception("Machine code instruction != 3 bytes : "+str(byteline))
 		output+=(byteline)
 	
 	if sizeWarning is not None and len(output) > sizeWarning :

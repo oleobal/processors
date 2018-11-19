@@ -121,6 +121,16 @@ Operations :
 | OR    | value/reg | value/reg | (op2) optional                        | 1    |
 | XOR   | value/reg | value/reg | (op2) optional                        | 1    |
 |       |           |           |                                       |      |
+| LADD  | value     |           |                                       | 2    |
+| LREM  | value     |           |                                       | 2    |
+| LMUL  | value     |           |                                       | 3    |
+| LDIV  | value     |           |                                       | 3    |
+| LMODU | value     |           |                                       | 2    |
+| LAND  | value     |           |                                       | 1    |
+| LOR   | value     |           |                                       | 1    |
+| LXOR  | value     |           |                                       | 1    |
+| LSTORE| value     |           | Store op1 into RINT                   | 1    |
+|       |           |           |                                       |      |
 | IFEQ  | value/reg | value/reg | execute following instr only if 1= 2  | 2    |
 | IFLT  | value/reg | value/reg | execute following instr only if 1< 2  | 2    |
 | IFLE  | value/reg | value/reg | execute following instr only if 1<=2  | 2    |
@@ -132,9 +142,6 @@ Operations :
 Costs in number of cycles. When a register is specified instead of a
 literal value, its value is used.
 
-**Jumping :** The current behavior of the `JUMP` instruction is to set `RCNT` to
-`0` and increment it until a label with the right value is found. Execution
-time thus varies depending on instruction number of the label.
 
 #### Conditionals
 
@@ -165,13 +172,34 @@ Bitwise operations `AND`, `OR` and `XOR` work the same way.
 
 **Tips and Tricks :** *XOR-ing a value with all 1's performs a negation.*
 
+#### L-instructions
+
+There is a set of instructions that can bypass the `9F` limit for literals :
+to eliminate the confusion, they only operate on the `RINT` register. This
+allows them to work on two bytes, so they can work with the full range from
+`0000` to `FFFF` (65535).
+
+These instructions are prefixed with `L`, which can indicate `Literal` (they
+only take literals as input) or `Large` (they work with large numbers).
+
+#### Labels and jumping
+
+Labels are numbered on two bytes, so from 0 to 65535.
+
+The current behavior of the `JUMP` instruction is to set `RCNT` to
+`0` and increment it until a label with the right value is found. Execution
+time thus varies depending on instruction number of the label.
+
+
 #### Assembler instructions
 
 The assembler works in two passes : it first removes comments, strips code, and
 interprets assembly instructions ; then, it goes through the code again, 
 performing substitutions and generating machine code.
 
-Assembler instructions start with a `:`.
+There is a set of instructions that actually never reach the processors, and
+just instruct the assembler to perform operations on the program. They are
+Assembler instructions, and start with a `:`.
 
 `:CONST <name> <value>` defines the `<name>` constant to `<value>`. `<value>`
 can be any valid word (literal, instruction, register..).
@@ -199,9 +227,11 @@ This special syntax creates an empty line after it (all `0xFF`) if there are no
 instructions on the same line.
 
 
-**Tips and Tricks :** *You may then use `STORE :name: RCNT` to write the value
+**Tips and Tricks :** *You may then use `STORE :name: RCNT` to write the values
 to the program counter and jump there statically, although watch out: the
 program counter will automatically increment after `STORE` finishes.*
+
+
 
 ### Machine code
 
@@ -245,6 +275,16 @@ Machine code/operator table :
 | IFGE  |`0xC4`|
 |       |      |
 | END   |`0xCF`|
+|       |      |
+| LADD  |`0xE0`|
+| LREM  |`0xE1`|
+| LMUL  |`0xE2`|
+| LDIV  |`0xE3`|
+| LMODU |`0xE4`|
+| LAND  |`0xE5`|
+| LOR   |`0xE6`|
+| LXOR  |`0xE7`|
+| LSTORE|`0xE8`|
 
 In addition, `0xFF` serves as a 'skip this instruction' operator.
 

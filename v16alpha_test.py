@@ -260,7 +260,7 @@ def testArithmetic(p, verbose=False):
 
 def testConditionals(p, verbose=True):
 	if (verbose):
-		print("="*nbEqSigns+"         Conditionals       "+"="*nbEqSigns)
+		print("="*nbEqSigns+"        Conditionals        "+"="*nbEqSigns)
 	
 	asm="""
 		STORE 0 RIOB
@@ -284,25 +284,82 @@ def testConditionals(p, verbose=True):
 		print(p.pinset)
 	assert(getIntFromBoolList(p.pinset.state) & 0x00FF0000 == 0b010101010000000000000000)
 
+
+
+def testLinstructions(p, verbose=False):
+	if (verbose):
+		print("="*nbEqSigns+"       L-instructions       "+"="*nbEqSigns)
+	asm="""
+		LSTORE 257
+		STORE RINT RIOA
+		END
+		"""
+	loadProgram(p,asm,verbose)
+	run(p,verbose)
+	
+	if verbose:
+		print(p.pinset)
+	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0x0101)
+	
+	reset(p)
+	asm="""
+		LSTORE 0x0FFF
+		LADD   0xF000
+		STORE RINT RIOA
+		END
+		"""
+	loadProgram(p,asm,verbose)
+	run(p,verbose)
+	
+	if verbose:
+		print(p.pinset)
+	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0xFFFF)
+	
+	reset(p)
+	asm="""
+		Store 0b01010101 Rint
+		LXOR   0xFFFF
+		STORE RINT RIOA
+		END
+		"""
+	loadProgram(p,asm,verbose)
+	run(p,verbose)
+	
+	if verbose:
+		print(p.pinset)
+	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0xFFAA)
+
+
+
+
 if __name__ == '__main__' :
 	verbose = False
 	from sys import argv
+	
+	if "-h" in argv:
+		print("""\
+-v verbose
+-t execute this test in particular
+-l list all available tests and abort""")
+	
 	if "-v" in argv:
 		verbose = True
-	
+
 	p = V16alpha()
 	
-	testBasicAndReset(p, verbose)
-	reset(p)
+	funcs = []
+	for i in locals().copy():
+		if i[0:4] == "test":
+			funcs.append(i)
 	
-	testConstantAndStaticLabels(p, verbose)
-	reset(p)
-	
-	testDynamicJump(p, verbose)
-	reset(p)
-	
-	testArithmetic(p, verbose)
-	reset(p)
-	
-	testConditionals(p, verbose)
-	reset(p)
+	if "-l" in argv:
+		for i in funcs:
+			print(i)
+		exit()
+	if "-t" in argv:
+		f = argv[argv.index("-t")+1]
+		locals()[f](p, verbose)
+	else:
+		for f in funcs:
+			locals()[f](p, verbose)
+			reset(p)
