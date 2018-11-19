@@ -5,8 +5,9 @@ The V16alpha is a general-purpose 16 bit processor that lacks all the
 features you would wish, and has all sorts of things you wish it didn't.
 
 It most notably has an internal program memory (for up to 256 instructions),
-allowing the full use of its 24 I/O pins. (instructions can still be fetched,
-of course).
+allowing the full use of its 24 I/O pins ; instructions can still be fetched,
+of course, so it can be used as a manually managed-cache or a way for the
+processor to be used without necessitating an external memory.
 
 
 ### Facilities
@@ -52,20 +53,21 @@ You can use `POP` and `PUSH` for automatic operation, or `DLST` and
 
 (Alimentation/Ground pins not represented)
 
-| No  | Name    | Description                                 |
-|-----|---------|---------------------------------------------|
-| 1   |Clock    | Front (1) triggers cycle (proc resets to 0) |
-|2-5  |Error    | Exposes the status code (read only)         |
-|6    |Prog load| Order the loading of an instruction         |
-|7-8  |P offset | Control where a loaded instruction is set   |
-|9-16 | I/O B   | Read/write the proc's I/O B register        |
-|17-32| I/O A   | R/W the proc's I/O A register, load programs|
+| No  | Name    | Description                                                  |
+|-----|---------|--------------------------------------------------------------|
+| 1   |Clock    | Front (1) triggers cycle (processor resets it to 0)          |
+|2-5  |Error    | Exposes the status code (read only)                          |
+|6    |Prog load| Order the loading of an instruction                          |
+|7-8  |P offset | Control where a loaded instruction is set                    |
+|9-16 | I/O B   | Read/write the processor's I/O B register                    |
+|17-32| I/O A   | R/W the processor's I/O A register, load programs            |
 
 Important : Pins are numbered 1-32 here, but they might be 0-indexed in some
 applications, so remember to check.
 
 ```
 // pinset description
+// (see tools.richeli.eu/pinout)
 # title
 V16alpha
 # top ; mark
@@ -92,9 +94,9 @@ Assembly for the V16alpha is a list of commands of the form :
 
 Values are in decimal or hexadecimal (prefixed with `0x`), from 0
 to 159 (`0x9F`). Unless specifically stated, it is not possible to use literals
-over `9F`. Targets are generally data units such as registers.
+over `9F`. Targets are generally registers or data units.
 
-Lines starting with `#` are comments, and not parsed.
+Text beginning with `#` is a comment, and not parsed.
 
 Operations :
 
@@ -147,8 +149,8 @@ Bitwise operations `AND`, `OR` and `XOR` work the same way.
 
 #### Assembler instructions
 
-The assembler works in two passes : it first removes comment, strip code, and
-interpret assembly instructions ; then, it goes through the code again, 
+The assembler works in two passes : it first removes comments, strips code, and
+interprets assembly instructions ; then, it goes through the code again, 
 performing substitutions and generating machine code.
 
 Assembler instructions start with a `:`.
@@ -157,15 +159,14 @@ Assembler instructions start with a `:`.
 can be any valid word (literal, instruction, register..).
 
 Then, the constant can be written in code prefixed by a `:`.
-Unlike normal assemblye, *constant names are case-sensitive*.
+Unlike normal assembly, **constant names are case-sensitive**.
 
 This example has a total length of 1 instruction in machine code, as the
 constant definition and substitution is performed before generating the code.
 ```
 :CONST Hello 100
 PUSH :Hello
-# yields :
-# A5 64 FF
+# yields code A5 64 FF
 ```
 
 There is a special syntax for declaring a constant that takes as value the
