@@ -19,7 +19,7 @@ ADD 50
 DSPR RINT RIOA
 ```
 
-Seeks to place `0xCF`, the end instruction, into the program memory of the processor to end execution. It cannot do so directly, because V16alpha machine code uses byte words where everything above `0x9F` is reserved, and everything beneath is a numeric literal. So it stores 157 into the I/O register (used as general purpose here), and adds 50 to it to compute the end instruction, before writing it at index 12 in the program memory.
+Seeks to place `0xCF`, the end instruction, into the program memory of the processor to end execution. It cannot do so directly, because V16alpha machine code uses byte words where everything above `0x9F` is reserved, and everything beneath is a numeric literal. So it stores 157 into the accumulator (aka `RINT`, internal), and adds 50 to it to compute the end instruction, before writing it at index 12 in the program memory.
 
 Annotated version :
 ```
@@ -62,4 +62,4 @@ Pin V16alpha    32 pins 01001000000000000000000000001100
 
 ### Note on methodology
 
-Proper methodology is not followed here, in that I'm catching exceptions to instead set error codes on small registers that could overflow.. Code is repeated, documentation is synced by hand with the implementation when it could be automated, etc. This is how I have fun `:]`
+Proper methodology is not followed here, in that I'm catching exceptions to instead set error codes on small registers that could overflow.. Code is repeated, documentation is synced by hand with the implementation when it could be automated, etc. It's one way to have fun, I suppose.
