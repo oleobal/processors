@@ -258,7 +258,31 @@ def testArithmetic(p, verbose=False):
 	assert(getIntFromBoolList(p.pinset.state) & 0x00FF0000 == 0b010110100000000000000000)
 
 
-
+def testConditionals(p, verbose=True):
+	if (verbose):
+		print("="*nbEqSigns+"         Conditionals       "+"="*nbEqSigns)
+	
+	asm="""
+		STORE 0 RIOB
+		STORE 50 RINT
+		IF RINT = 0       # false
+		END
+		IF RINT >= 0      # true
+		STORE RINT RIOB
+		if rint lt riob   # false
+		STORE 100 RIOB
+		ifle rint riob    # true
+		store 0b01010101 riob
+		if riob > 0       # true
+		END
+		store 0 riob
+		end
+		"""
+	loadProgram(p, asm, verbose)
+	run(p, verbose, safety=100)
+	if verbose:
+		print(p.pinset)
+	assert(getIntFromBoolList(p.pinset.state) & 0x00FF0000 == 0b010101010000000000000000)
 
 if __name__ == '__main__' :
 	verbose = False
@@ -278,4 +302,7 @@ if __name__ == '__main__' :
 	reset(p)
 	
 	testArithmetic(p, verbose)
+	reset(p)
+	
+	testConditionals(p, verbose)
 	reset(p)

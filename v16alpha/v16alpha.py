@@ -40,7 +40,14 @@ class V16alpha(Processor)  :
 	"OR"   :1,
 	"XOR"  :1,
 	
+	"IFEQ" :2,
+	"IFLT" :2,
+	"IFLE" :2,
+	"IFGT" :2,
+	"IFGE" :2,
+	
 	"END"  :1,
+	
 	 0xFF  :1,
 	}
 	
@@ -119,6 +126,12 @@ class V16alpha(Processor)  :
 			0xB5:"AND",
 			0xB6:"OR",
 			0xB7:"XOR",
+			
+			0xC0:"IFEQ",
+			0xC1:"IFLT",
+			0xC2:"IFLE",
+			0xC3:"IFGT",
+			0xC4:"IFGE",
 			
 			0xCF:"END",
 			
@@ -407,7 +420,6 @@ class V16alpha(Processor)  :
 				
 
 		elif op in ["ADD", "REM", "MUL", "DIV", "MODU", "AND", "OR", "XOR"]:
-			#breakpoint()
 			if len(instruction) == 3:
 				if type(instruction[1]) is int:
 					a = instruction[1]
@@ -448,6 +460,41 @@ class V16alpha(Processor)  :
 			except Exception:
 				self.err.value = 13
 				return
+		
+		elif op in ["IFEQ", "IFLT", "IFLE", "IFGT", "IFGE"]:
+			if len(instruction) == 3:
+				if type(instruction[1]) is int:
+					a = instruction[1]
+				elif type(instruction[1]) is Register:
+					a = instruction[1].value
+					
+				if type(instruction[2]) is int:
+					b = instruction[2]
+				elif type(instruction[2]) is Register:
+					b = instruction[2].value
+			else:
+				self.err.value = 12
+				return
+			try:
+				if op == "IFEQ":
+					if a != b:
+						self.programCounter.value+=1
+				if op == "IFLT":
+					if a >= b:
+						self.programCounter.value+=1
+				if op == "IFLE":
+					if a > b:
+						self.programCounter.value+=1
+				if op == "IFGT":
+					if a <= b:
+						self.programCounter.value+=1
+				if op == "IFGE":
+					if a < b:
+						self.programCounter.value+=1
+			except Exception:
+				self.err.value = 15
+				return
+				
 		
 		self.err.value = 4
 

@@ -92,9 +92,9 @@ Assembly for the V16alpha is a list of commands of the form :
 
 `<OP> [target or value] [target or value]`
 
-Values are in decimal or hexadecimal (prefixed with `0x`), from 0
-to 159 (`0x9F`). Unless specifically stated, it is not possible to use literals
-over `9F`. Targets are generally registers or data units.
+Values are in decimal, hexadecimal (prefixed with `0x`), or binary (`0b`),
+from 0 to 159 (`0x9F`). Unless specifically stated, it is not possible to use
+literals over `9F`, as these values are reserved.
 
 Text beginning with `#` is a comment, and not parsed.
 
@@ -121,6 +121,12 @@ Operations :
 | OR    | value/reg | value/reg | (op2) optional                        | 1    |
 | XOR   | value/reg | value/reg | (op2) optional                        | 1    |
 |       |           |           |                                       |      |
+| IFEQ  | value/reg | value/reg | execute following instr only if 1= 2  | 2    |
+| IFLT  | value/reg | value/reg | execute following instr only if 1< 2  | 2    |
+| IFLE  | value/reg | value/reg | execute following instr only if 1<=2  | 2    |
+| IFGT  | value/reg | value/reg | execute following instr only if 1> 2  | 2    |
+| IFGE  | value/reg | value/reg | execute following instr only if 1>=2  | 2    |
+|       |           |           |                                       |      |
 | END   |           |           | End execution                         | 1    |
 
 Costs in number of cycles. When a register is specified instead of a
@@ -129,6 +135,18 @@ literal value, its value is used.
 **Jumping :** The current behavior of the `JUMP` instruction is to set `RCNT` to
 `0` and increment it until a label with the right value is found. Execution
 time thus varies depending on instruction number of the label.
+
+#### Conditionals
+
+The provided tests (`IF`) execute the operation immediatly following only if
+their condition is true. Essentially, all they do is increment the program
+counter if the condition is false.
+
+The official v16a assembler provides syntactic sugar for tests, with the more
+intuitive symbols `=`, `>`, `>=`, `<`, and `<=`. Use the keyword `IF` for this,
+and the expression will be translated. For instance, `IF RINT = 5` is the same
+as `IF RINT EQ 5` which is the same as `IFEQ RINT 5` which translates to
+`C0 D0 05`. Do take care to separate each symbol with whitespace.
 
 #### Arithmetic operations
 
@@ -220,6 +238,12 @@ Machine code/operator table :
 | OR    |`0xB6`|
 | XOR   |`0xB7`|
 |       |      |
+| IFEQ  |`0xC0`|
+| IFLT  |`0xC1`|
+| IFLE  |`0xC2`|
+| IFGT  |`0xC3`|
+| IFGE  |`0xC4`|
+|       |      |
 | END   |`0xCF`|
 
 In addition, `0xFF` serves as a 'skip this instruction' operator.
@@ -298,7 +322,7 @@ Available by checking `RERR`, a 4-bit register. Codes :
 | 0    | 0   | Processor ready          |
 | 1    | 1   | No program               |
 | 2    | 2   | Executing                |
-| 3    | 3   | Skipped a 0xFF operator  |
+| 3    | 3   | Skipped an instruction   |
 | 4    | 4   | Finished current instr   |
 | 5    | 5   | Started loading instr    |
 | 9    | 9   | Finished execution       |

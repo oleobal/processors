@@ -20,6 +20,12 @@ conversionTable={
 	"OR"   :0xB6,
 	"XOR"  :0xB7,
 	
+	"IFEQ" :0xC0,
+	"IFLT" :0xC1,
+	"IFLE" :0xC2,
+	"IFGT" :0xC3,
+	"IFGE" :0xC4,
+	
 	"END"  :0xCF,
 	
 	"RINT" :0xD0,
@@ -33,6 +39,30 @@ conversionTable={
 
 INSTRUCTION_SIZE = 3
 
+
+ifSubstituteTable = {
+	"=" : "EQ",
+	"<" : "LT",
+	"<=": "LE",
+	">" : "GT",
+	">=": "GE",
+	"EQ": "EQ",
+	"LT": "LT",
+	"LE": "LE",
+	"GT": "GT",
+	"GE": "GE",
+}
+def lineSubstitute(instruction):
+	"""
+	turns constructs such as "if rint > 0" into "ifeq rint 0" (only one line)
+	if the line does not start with if (then whitespace) it returns it unchanged
+	"""
+	i = instruction.split()
+	if i[0].upper() != "IF":
+		return instruction
+	return "IF"+ifSubstituteTable[i[2].upper()]+" "+i[1]+" "+i[3]
+	
+	
 def assemble(assembly, sizeWarning=256):
 	"""
 	takes a string of assembly code and returns machine code
@@ -56,7 +86,7 @@ def assemble(assembly, sizeWarning=256):
 			pass
 		
 		if line[0] != ":":
-			sanitizedAssembly.append(line.strip())
+			sanitizedAssembly.append(line)
 			lineno+=1
 			continue
 		line = line[1:]
@@ -74,14 +104,17 @@ def assemble(assembly, sizeWarning=256):
 		
 		lineno+=1
 	
+	
+	
 	output = bytearray()
 	for line in sanitizedAssembly:
 		byteline = bytearray()
+		line = lineSubstitute(line)
 		line = line.split()
 		for i in line :
 			if i[0] == ":":
 				i = constants[i[1:]]
-				
+			
 			if i.upper() in conversionTable :
 				byteline.append(conversionTable[i.upper()])
 			else:
