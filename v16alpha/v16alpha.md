@@ -10,7 +10,8 @@ of course, so it can be used as a manually managed-cache or a way for the
 processor to be used without necessitating an external memory.
 
 
-### Facilities
+Facilities
+----------
 
 The following registers are provided :
 
@@ -47,7 +48,8 @@ unit it addresses is filled with zeroes (`0x00`) at initialization.
 You can use `POP` and `PUSH` for automatic operation, or `DLST` and
 `DSST` for loading/storing into the unit.
 
-### Pinout
+Pinout
+------
 
 <img src="./v16alpha_pinout.svg" width="100%" height="500">
 
@@ -86,7 +88,8 @@ V16alpha
 ```
 
 
-### Assembly
+Assembly
+--------
 
 Assembly for the V16alpha is a list of commands of the form :
 
@@ -121,14 +124,14 @@ Operations :
 | OR    | value/reg | value/reg | (op2) optional                        | 1    |
 | XOR   | value/reg | value/reg | (op2) optional                        | 1    |
 |       |           |           |                                       |      |
-| LADD  | value     |           |                                       | 2    |
-| LREM  | value     |           |                                       | 2    |
-| LMUL  | value     |           |                                       | 3    |
-| LDIV  | value     |           |                                       | 3    |
-| LMODU | value     |           |                                       | 2    |
-| LAND  | value     |           |                                       | 1    |
-| LOR   | value     |           |                                       | 1    |
-| LXOR  | value     |           |                                       | 1    |
+| LADD  | value     |           | Add op1 to RINT                       | 2    |
+| LREM  | value     |           | Remove op1 from RINT                  | 2    |
+| LMUL  | value     |           | Multiply op1 with RINT, into RINT     | 3    |
+| LDIV  | value     |           | Divide RINT by op1, into RINT         | 3    |
+| LMODU | value     |           | Remainder of RINT/op1, into RINT      | 2    |
+| LAND  | value     |           | Bitwise RINT AND op1, into RINT       | 1    |
+| LOR   | value     |           | Bitwise RINT OR op1,  into RINT       | 1    |
+| LXOR  | value     |           | Bitwise RINT XOR op1, into RINT       | 1    |
 | LSTORE| value     |           | Store op1 into RINT                   | 1    |
 |       |           |           |                                       |      |
 | IFEQ  | value/reg | value/reg | execute following instr only if 1= 2  | 2    |
@@ -143,7 +146,7 @@ Costs in number of cycles. When a register is specified instead of a
 literal value, its value is used.
 
 
-#### Conditionals
+### Conditionals
 
 The provided tests (`IF`) execute the operation immediatly following only if
 their condition is true. Essentially, all they do is increment the program
@@ -155,7 +158,7 @@ and the expression will be translated. For instance, `IF RINT = 5` is the same
 as `IF RINT EQ 5` which is the same as `IFEQ RINT 5` which translates to
 `C0 D0 05`. Do take care to separate each symbol with whitespace.
 
-#### Arithmetic operations
+### Arithmetic operations
 
 `ADD`, `REM`, `MUL`, `DIV`, and `MODU` all operate on `RINT` and can have
 either one or two operands.
@@ -172,7 +175,7 @@ Bitwise operations `AND`, `OR` and `XOR` work the same way.
 
 **Tips and Tricks :** *XOR-ing a value with all 1's performs a negation.*
 
-#### L-instructions
+### L-instructions
 
 There is a set of instructions that can bypass the `9F` limit for literals :
 to eliminate the confusion, they only operate on the `RINT` register. This
@@ -182,7 +185,7 @@ allows them to work on two bytes, so they can work with the full range from
 These instructions are prefixed with `L`, which can indicate `Literal` (they
 only take literals as input) or `Large` (they work with large numbers).
 
-#### Labels and jumping
+### Labels and jumping
 
 Labels are numbered on two bytes, so from 0 to 65535.
 
@@ -191,7 +194,7 @@ The current behavior of the `JUMP` instruction is to set `RCNT` to
 time thus varies depending on instruction number of the label.
 
 
-#### Assembler instructions
+### Assembler instructions
 
 The assembler works in two passes : it first removes comments, strips code, and
 interprets assembly instructions ; then, it goes through the code again, 
@@ -233,7 +236,8 @@ program counter will automatically increment after `STORE` finishes.*
 
 
 
-### Machine code
+Machine code
+------------
 
 Operators and operands are one byte each. Each instruction is three
 bytes long, with `0xFF` used to pad instructions that have less than
@@ -300,16 +304,17 @@ Codes for registers :
 | RIOA     |`0xD5`|
 | RIOB     |`0xD6`|
 
-#### A note on arithmetic instructions
+### A note on arithmetic instructions
 
 Arithmetic instructions can have one or two operands in assembly. In machine
 code, if the second operand is `0`, it's interpreted as being an operation on
 the register itself.
 
 
-### Loading a program
+Loading a program
+-----------------
 
-The V16alpha uses the I/O A register for loading instruction.
+The V16alpha uses the I/O A register for loading instructions.
 
 Remember that machine code instructions are three bytes long. The processor can
 hold 256 three-bytes instructions.
@@ -329,7 +334,8 @@ of the loading, after which it is set to `2` (like for any instruction).
 
 The `Prog load` and `Prog ctrl` pins are all set to `0` after reading.
 
-### Running
+Running
+-------
 
 Cycling the processor when `Prog load` is at `0` will execute instructions.
 
@@ -340,7 +346,7 @@ instruction, or when reaching the end of the program table
 Cycling when the error code is `9` (finished execution) will automatically
 reset the program counter to 0 before continuing execution.
 
-#### Resetting
+### Resetting
 
 Setting the `Prog load` and both `Prog ctrl` pins to 1 (checked when an
 instruction is finished) will reset the program counter and the error code
@@ -353,7 +359,8 @@ a process taking 1 cycle.
 The `Prog load` and `Prog ctrl` pins are all set to `0` after reading. Do set
 them back up to `1` for resetting.
 
-### Status codes
+Status codes
+------------
 
 Available by checking `RERR`, a 4-bit register. Codes :
 
