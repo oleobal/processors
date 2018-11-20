@@ -20,6 +20,9 @@ conversionTable={
 	"OR"   :0xB6,
 	"XOR"  :0xB7,
 	
+	"LSHIFT":0xBA,
+	"RSHIFT":0xBB,
+	
 	"IFEQ" :0xC0,
 	"IFLT" :0xC1,
 	"IFLE" :0xC2,
@@ -47,6 +50,20 @@ conversionTable={
 	"LSTORE":0xE8
 }
 
+instructionsFollowedByBigInt = [
+	"LABEL",
+	"JUMP",
+	"LADD",
+	"LREM",
+	"LMUL",
+	"LDIV",
+	"LMODU",
+	"LAND",
+	"LOR",
+	"LXOR",
+	"LSTORE"
+]
+
 INSTRUCTION_SIZE = 3
 
 
@@ -61,6 +78,11 @@ ifSubstituteTable = {
 	"LE": "LE",
 	"GT": "GT",
 	"GE": "GE",
+	
+	">>": "RSHIFT",
+	"<<": "LSHIFT",
+	"RSHIFT":"RSHIFT",
+	"LSHIFT":"LSHIFT"
 }
 def lineSubstitute(instruction):
 	"""
@@ -68,9 +90,12 @@ def lineSubstitute(instruction):
 	if the line does not start with if (then whitespace) it returns it unchanged
 	"""
 	i = instruction.split()
-	if i[0].upper() != "IF":
-		return instruction
-	return "IF"+ifSubstituteTable[i[2].upper()]+" "+i[1]+" "+i[3]
+	#
+	if len(i) == 4 and i[0].upper() == "IF":
+		return "IF"+ifSubstituteTable[i[2].upper()]+" "+i[1]+" "+i[3]
+	if len(i) == 3 and i[1].upper() in [ "<<", ">>", "RSHIFT", "LSHIFT"]:
+		return ifSubstituteTable[i[1].upper()]+" "+i[0]+" "+i[2]
+	return instruction
 	
 	
 def assemble(assembly, sizeWarning=256):
@@ -129,14 +154,17 @@ def assemble(assembly, sizeWarning=256):
 				byteline.append(conversionTable[i.upper()])
 			else:
 				i = int(i,0)
-				if i <= 0xFF:
+				if line[0] in instructionsFollowedByBigInt:
+					if i <= 0xFFFF:
+						byteline.append((i&0xFF00)>>8)
+						byteline.append( i&0x00FF)
+						# fill 2 bytes
+					else:
+						raise Exception("Literal over 0xFFFF : {} (0x{:X})".format(i,i))
+				elif i <= 0xFF:
 					byteline.append(i)
-				elif i <= 0xFFFF:
-					byteline.append((i&0xFF00)>>8)
-					byteline.append( i&0x00FF)
-					# fill 2 bytes
 				else:
-					raise Exception("Literal over 0xFFFF : "+str(i))
+					raise Exception("Literal over 0xFF : {} (0x{:X})".format(i,i))
 					
 		
 		# arithmetic instructions

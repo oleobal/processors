@@ -333,7 +333,50 @@ def testLinstructions(p, verbose=False):
 	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0xFFAA)
 
 
-
+def testBitShift(p, verbose=False):
+	if (verbose):
+		print("="*nbEqSigns+"        Bit shifting        "+"="*nbEqSigns)
+	asm="""
+		LSTORE 0xAAAA
+		STORE RINT RIOA
+		RIOA >> 1
+		END
+		"""
+	loadProgram(p,asm,verbose)
+	run(p,verbose)
+	if verbose:
+		print(p.register)
+		print(p.ioa)
+		print(p.pinset)
+	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0x5555)
+	reset(p)
+	asm="""
+		LSTORE 0x00FF
+		STORE RINT RIOA
+		LSHIFT RIOA 4
+		RIOA LSHIFT 2
+		END
+		"""
+	loadProgram(p,asm,verbose)
+	run(p,verbose)
+	if verbose:
+		print(p.register)
+		print(p.ioa)
+		print(p.pinset)
+	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0x3FC0)
+	reset(p)
+	asm="""
+		STORE 100 RIOB
+		LSTORE 0x0FF0
+		STORE RINT RIOA
+		RIOA RSHIFT RIOB
+		END
+		"""
+	loadProgram(p,asm,verbose)
+	run(p,verbose)
+	if verbose:
+		print(p.pinset)
+	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0x0000)
 
 if __name__ == '__main__' :
 	verbose = False
@@ -342,7 +385,7 @@ if __name__ == '__main__' :
 	if "-h" in argv:
 		print("""\
 -v verbose
--t execute this test in particular
+-t execute this test in particular ("test" at the start is optional)
 -l list all available tests and abort""")
 	
 	if "-v" in argv:
@@ -352,7 +395,7 @@ if __name__ == '__main__' :
 	
 	funcs = []
 	for i in locals().copy():
-		if i[0:4] == "test":
+		if i[:4] == "test":
 			funcs.append(i)
 	
 	if "-l" in argv:
@@ -360,9 +403,20 @@ if __name__ == '__main__' :
 			print(i)
 		exit()
 	if "-t" in argv:
-		f = argv[argv.index("-t")+1]
-		locals()[f](p, verbose)
-	else:
-		for f in funcs:
+		n = argv[argv.index("-t")+1]
+		if n[:4] != "test":
+			n="test"+n
+		funcs = [n]
+		
+	for f in funcs:
+		try:
+			if verbose:
+				print("\n\n\n")
 			locals()[f](p, verbose)
-			reset(p)
+			status = "OK"
+		except Exception as e:
+			if verbose:
+				from traceback import print_exc ; print_exc(limit=-1,chain=False)
+			status = "FAIL"
+		print(" {:^4} {}".format(status, f[4:]))
+		reset(p)

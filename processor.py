@@ -11,7 +11,7 @@ class Register :
 	def __str__(self):
 		return "Reg {:<10} {:>3} bits {:<6} (0x{:X})".format(self.name, self.size, self.value, self.value)
 	def __repr__(self):
-		return "Reg {} {} bits {} (0x{})".format(self.name, self.size, self.value, self.value)
+		return "Reg {} {} bits {} (0x{:X})".format(self.name, self.size, self.value, self.value)
 	
 	def __init__(self, size, name=""):
 		self.name = name

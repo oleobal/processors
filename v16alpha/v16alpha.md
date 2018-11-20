@@ -124,6 +124,9 @@ Operations :
 | OR    | value/reg | value/reg | (op2) optional                        | 1    |
 | XOR   | value/reg | value/reg | (op2) optional                        | 1    |
 |       |           |           |                                       |      |
+| LSHIFT| reg       | value/reg | shift op1 left by op2 bits            | 1    |
+| RSHIFT| reg       | value/reg | shift op1 right by op2 bits           | 1    |
+|       |           |           |                                       |      |
 | LADD  | value     |           | Add op1 to RINT                       | 2    |
 | LREM  | value     |           | Remove op1 from RINT                  | 2    |
 | LMUL  | value     |           | Multiply op1 with RINT, into RINT     | 3    |
@@ -171,9 +174,13 @@ If they have two operands, the value of `RINT` becomes
 
 Remember that, as usual, only literals up to `0x9F` are allowed.
 
-Bitwise operations `AND`, `OR` and `XOR` work the same way.
+**Bitwise operations** `AND`, `OR` and `XOR` work the same way.
 
 **Tips and Tricks :** *XOR-ing a value with all 1's performs a negation.*
+
+**Bit shifting** is made easier with special syntactic sugar, the symbols `<<`
+and `>>`. For instance, `RINT << 2` is equal to `LSHIFT RINT 2`, which shifts
+the register two bits left.
 
 ### L-instructions
 
@@ -271,6 +278,9 @@ Machine code/operator table :
 | AND   |`0xB5`|
 | OR    |`0xB6`|
 | XOR   |`0xB7`|
+|       |      |
+| LSHIFT|`0xBA`|
+| RSHIFT|`0xBB`|
 |       |      |
 | IFEQ  |`0xC0`|
 | IFLT  |`0xC1`|

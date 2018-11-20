@@ -21,32 +21,35 @@ class V16alpha(Processor)  :
 	# but really this whole thing is nonsensical
 	
 	operations={
-	"STORE":2,
-	"DLPR" :3,
-	"DSPR" :3,
-	"DLST" :3,
-	"DSST" :3,
-	"PUSH" :2,
-	"POP"  :2,
-	"LABEL":1,
-	"JUMP" :1,
+	"STORE" :2,
+	"DLPR"  :3,
+	"DSPR"  :3,
+	"DLST"  :3,
+	"DSST"  :3,
+	"PUSH"  :2,
+	"POP"   :2,
+	"LABEL" :1,
+	"JUMP"  :1,
 
-	"ADD"  :2,
-	"REM"  :2,
-	"MUL"  :3,
-	"DIV"  :3,
-	"MODU" :2,
-	"AND"  :1,
-	"OR"   :1,
-	"XOR"  :1,
+	"ADD"   :2,
+	"REM"   :2,
+	"MUL"   :3,
+	"DIV"   :3,
+	"MODU"  :2,
+	"AND"   :1,
+	"OR"    :1,
+	"XOR"   :1,
 	
-	"IFEQ" :2,
-	"IFLT" :2,
-	"IFLE" :2,
-	"IFGT" :2,
-	"IFGE" :2,
+	"LSHIFT":1,
+	"RSHIFT":1,
 	
-	"END"  :1,
+	"IFEQ"  :2,
+	"IFLT"  :2,
+	"IFLE"  :2,
+	"IFGT"  :2,
+	"IFGE"  :2,
+	
+	"END"   :1,
 	
 	
 	"LADD"  :2,
@@ -61,7 +64,7 @@ class V16alpha(Processor)  :
 
 
 
-	 0xFF  :1,
+	 0xFF   :1,
 	}
 	
 	errorCodes ={
@@ -140,6 +143,8 @@ class V16alpha(Processor)  :
 			0xB6:"OR",
 			0xB7:"XOR",
 			
+			0xBA:"LSHIFT",
+			0xBB:"RSHIFT",
 			
 			0xC0:"IFEQ",
 			0xC1:"IFLT",
@@ -290,6 +295,8 @@ class V16alpha(Processor)  :
 		
 		if self.currentInstructionState < 0:
 			raise Exception("Grave instruction processing failure")
+			# there are two lists of instructions in this file,
+			# maybe I forgot to put it in one ?
 		
 		if self.currentInstructionState == 0:
 			# check whether we are to load instructions
@@ -489,6 +496,19 @@ class V16alpha(Processor)  :
 			except Exception:
 				self.err.value = 13
 				return
+		
+		elif op in ["LSHIFT", "RSHIFT"]:
+			if len(instruction) != 3:
+				self.err.value = 12
+				return
+			if type(instruction[2]) is int:
+				a = instruction[2]
+			else:
+				a = instruction[2].value
+			if op == "LSHIFT":
+				instruction[1].value <<= a
+			elif op == "RSHIFT":
+				instruction[1].value >>= a
 		
 		# 2-byte ops
 		elif op in ["LSTORE", "LADD", "LREM", "LMUL", "LDIV", "LMODU", "LAND", "LOR", "LXOR"]:
