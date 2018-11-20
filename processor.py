@@ -6,12 +6,15 @@ Contains general concepts useful for all implementations
 class Register :
 	"""
 	A binary register with as many bits as you require
+	
+	it is built around an integer, so using the "value" field (which takes or
+	returns an int) is preferable to using "state" (bool list)
 	"""
 	
 	def __str__(self):
 		return "Reg {:<10} {:>3} bits {:<6} (0x{:X})".format(self.name, self.size, self.value, self.value)
 	def __repr__(self):
-		return "Reg {} {} bits {} (0x{:X})".format(self.name, self.size, self.value, self.value)
+		return "{} {} bits {} (0x{:X})".format(self.name, self.size, self.value, self.value)
 	
 	def __init__(self, size, name=""):
 		self.name = name
@@ -40,6 +43,19 @@ class Register :
 		for p in self.pinsets:
 			p.state = self._value
 
+	@property
+	def state(self):
+		s= getBoolListFromInt(self._value)
+		while len(s) < self.size :
+			s = [False] + s
+		return s
+	@state.setter
+	def state(self, newState):
+		if len(newState) > self.size:
+			raise ValueError("Too many bits")
+		self.value = getIntFromBoolList(newState)
+
+
 
 class Pinset:
 	"""
@@ -48,6 +64,9 @@ class Pinset:
 	They can be set together, or addressed individually
 	Append register pointers to the register field to update them when
 	the pinset changes
+	
+	it is built around an bool list, so using the "state" field (which takes or
+	returns a bool list) is preferable to using "value" (integer)
 	"""
 	
 	def __str__(self):
@@ -130,6 +149,10 @@ class Pinset:
 	
 	
 	@property
+	def size(self):
+		return len(self.pins)
+	
+	@property
 	def state(self):
 		result = []
 		for p in self.pins:
@@ -153,7 +176,7 @@ class Pinset:
 			newState = [False]+newState
 		
 		if len(newState) > len(self.pins):
-			raise TypeError("Too many elements")
+			raise ValueError("Too many elements")
 			
 		
 		for i in range(len(newState)):
@@ -162,6 +185,15 @@ class Pinset:
 			else:
 				self.pins[i][0].setPinState(self.pins[i][1], bool(newState[i]))
 			
+	@property
+	def value(self):
+		return getIntFromBoolList(self.state)
+	@value.setter
+	def value(self, newVal):
+		s = getBoolListFromInt(newVal)
+		if len(s) > len(self.pins):
+			raise ValueError("Value too large")
+		self.state = s
 	
 def link(register, pinset):
 	"""
@@ -234,10 +266,14 @@ def getStrFromBoolList(boollist):
 		else:
 			result+="0"
 	return result
-	
+
+
+
 	
 class Processor :
 	pass
+
+
 
 def printByteArray(array, groupBytesBy=8, name=None):
 	"""
