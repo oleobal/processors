@@ -122,7 +122,7 @@ def assemble(assembly, sizeWarning=256):
 		line = lineSubstitute(line)
 		line = line.split()
 		for i in line :
-			if i[0] == ":":
+			if i[0] == "!":
 				i = constants[i[1:]]
 			
 			if i.upper() in conversionTable :

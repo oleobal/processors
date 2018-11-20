@@ -207,21 +207,21 @@ Assembler instructions, and start with a `:`.
 `:CONST <name> <value>` defines the `<name>` constant to `<value>`. `<value>`
 can be any valid word (literal, instruction, register..).
 
-Then, the constant can be written in code prefixed by a `:`.
+Then, the constant can be written in code prefixed by a `!`.
 Unlike normal assembly, **constant names are case-sensitive**.
 
 This example has a total length of 1 instruction in machine code, as the
 constant definition and substitution is performed before generating the code.
 ```
 :CONST Hello 100
-PUSH :Hello
+PUSH !Hello
 # yields code A5 64 FF
 ```
 
 There is a special syntax for declaring a constant that takes as value the
 number (0-indexed) of the instruction is precedes :
 ```
-STORE :name RIOA # writes `2` to RIOA 
+STORE !name RIOA # writes `2` to RIOA 
 PUSH 100
 :name: POP RINT
 END
@@ -230,7 +230,7 @@ This special syntax creates an empty line after it (all `0xFF`) if there are no
 instructions on the same line.
 
 
-**Tips and Tricks :** *You may then use `STORE :name: RCNT` to write the values
+**Tips and Tricks :** *You may then use `STORE !name RCNT` to write the values
 to the program counter and jump there statically, although watch out: the
 program counter will automatically increment after `STORE` finishes.*
 

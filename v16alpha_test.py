@@ -134,35 +134,38 @@ def testConstantAndStaticLabels(p, verbose=False):
 		print("="*nbEqSigns+"  ConstantAndStaticLabels   "+"="*nbEqSigns)
 
 	# by hand
-	asm1 ="""\
-STORE 5 RINT
-STORE RINT RCNT
+	asm1 ="""
+		STORE 5 RINT
+		STORE RINT RCNT
 
-PUSH 1 # these stack ops will be skipped
-POP RINO
-PUSH 1
-POP RINO
+		PUSH 1 # these stack ops will be skipped
+		POP RINO
+		PUSH 1
+		POP RINO
 
-END"""
+		END
+		"""
 	# with constants
-	asm2 ="""\
-:CONST lol 5
-STORE :lol RINT
-STORE RINT RCNT
-PUSH 1
-POP  RINO
-PUSH 1
- POP RINO
-END"""
+	asm2 ="""
+		:CONST lol 5
+		STORE !lol RINT
+		STORE RINT RCNT
+		PUSH 1
+		POP  RINO
+		PUSH 1
+		 POP RINO
+		END
+		"""
 	# with static label
-	asm3 ="""\
-STORE :endline RINT
-STORE  RINT    RCNT
-PUSH 1
-POP RINO
-PUSH 1
-:endline: POP RINO
-END"""
+	asm3 ="""
+		STORE !endline RINT
+		STORE  RINT    RCNT
+		PUSH 1
+		POP RINO
+		PUSH 1
+		:endline: POP RINO
+		END
+		"""
 	prog1 = assemble(asm1)
 	prog2 = assemble(asm2)
 	prog3 = assemble(asm3)
