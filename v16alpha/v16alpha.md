@@ -1,7 +1,9 @@
-V16α processor (V16alpha)
+v16α processor (v16alpha)
 =========================
 
-The V16alpha is a general-purpose 16 bit processor that lacks all the
+<img src="./v16alpha_logo.svg" width="300" height="150">
+
+The v16alpha is a general-purpose 16 bit processor that lacks all the
 features you would wish, and has all sorts of things you wish it didn't.
 
 It most notably has an internal program memory (for up to 256 instructions),
@@ -29,7 +31,7 @@ components :
  - `RSTA` (stack), pointing to the current stack level (4 bits)
 
 `RCNT` and `RSTA` work the same way, in that they both address a memory
-unit. On the V16alpha, "memory units" are arrays of data that cannot be
+unit. On the v16alpha, "memory units" are arrays of data that cannot be
 used directly by programs. They use specialized operations instead.
 
 `RCNT` addresses instructions, which are 3 bytes long (operator, 
@@ -51,7 +53,7 @@ You can use `POP` and `PUSH` for automatic operation, or `DLST` and
 Pinout
 ------
 
-<img src="./v16alpha_pinout.svg" width="100%" height="500">
+<img src="./v16alpha_pinout.svg" width="30%">
 
 (Alimentation/Ground pins not represented)
 
@@ -71,7 +73,7 @@ applications, so remember to check.
 // pinset description
 // (see tools.richeli.eu/pinout)
 # title
-V16alpha
+v16alpha
 # top ; mark
 # end
 
@@ -91,7 +93,7 @@ V16alpha
 Assembly
 --------
 
-Assembly for the V16alpha is a list of commands of the form :
+Assembly for the v16alpha is a list of commands of the form :
 
 `<OP> [target or value] [target or value]`
 
@@ -324,7 +326,7 @@ the register itself.
 Loading a program
 -----------------
 
-The V16alpha uses the I/O A register for loading instructions.
+The v16alpha uses the I/O A register for loading instructions.
 
 Remember that machine code instructions are three bytes long. The processor can
 hold 256 three-bytes instructions.
