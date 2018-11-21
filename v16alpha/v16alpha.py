@@ -93,7 +93,7 @@ class V16alpha(Processor)  :
 		self.ioa.setSubset(0,self.ioal)
 		self.ioa.setSubset(8,self.ioar)
 		self.iob = Register(8,  name="I/O B")
-		self.io = self.ioa
+		self.io = self.iob
 		self.err = Register(4, name="ERROR")
 		# TODO catch exceptions and put them here instead
 		
