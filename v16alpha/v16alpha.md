@@ -20,9 +20,12 @@ The following registers are provided :
  - `RINT` (internal), general purpose, used for arithmetic (16 bits)
  - `RIOA` (input/output), supposed to be connected to a bus (16 bits)
    `RIOA` is also used for program loading.
+ - `RINO` redirects to `RIOA`
  - `RIOB` (input/output), supposed to be connected to a bus (8 bits)
- - `RINO` redirects to RIOA
  
+`RINT` and `RIOA` can each be manipulated as two 8-bit registers, named
+`RINTL` (left, big end) and `RINTR` (right, little end), or `RIOAL` and `RIOAR`.
+
 In addition, other registers are used for operation of mostly automatic
 components :
  
@@ -315,6 +318,8 @@ Codes for registers :
 | RSTA     |`0xD4`|
 | RIOA     |`0xD5`|
 | RIOB     |`0xD6`|
+| RIOAL    |`0xD7`|
+| RIOAR    |`0xD8`|
 
 ### A note on arithmetic instructions
 

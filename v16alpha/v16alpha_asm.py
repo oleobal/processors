@@ -38,6 +38,10 @@ conversionTable={
 	"RSTA" :0xD4,
 	"RIOA" :0xD5,
 	"RIOB" :0xD6,
+	"RIOAL":0xD7,
+	"RIOAR":0xD8,
+	"RINTL":0xD9,
+	"RINTR":0xDA,
 	
 	"LADD" :0xE0,
 	"LREM" :0xE1,

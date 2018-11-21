@@ -76,7 +76,8 @@ def reset(p, verbose=False):
 
 		
 		
-		
+def printHeader(symbol,title):
+	print(symbol*nbEqSigns+"{:^28}".format(title)+symbol*nbEqSigns)
 		
 		
 		
@@ -227,7 +228,7 @@ def testArithmetic(p, verbose=False):
 	if verbose:
 		print("{:indic}".format(p.pinset))
 	assert(getIntFromBoolList(p.pinset.state) & 0x00FF0000 == 0b00001010000000000000000)
-	reset(p)
+	reset(p, verbose)
 	if verbose:
 		print("-"*nbEqSigns+"              OR            "+"-"*nbEqSigns)
 	asm="""
@@ -243,7 +244,7 @@ def testArithmetic(p, verbose=False):
 		print("{:indic}".format(p.pinset))
 
 	assert(getIntFromBoolList(p.pinset.state) & 0x00FF0000 == 0b010111110000000000000000)
-	reset(p)
+	reset(p, verbose)
 	
 	if verbose:
 		print("-"*nbEqSigns+"             XOR            "+"-"*nbEqSigns)
@@ -304,7 +305,7 @@ def testLinstructions(p, verbose=False):
 		print("{:indic}".format(p.pinset))
 	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0x0101)
 	
-	reset(p)
+	reset(p, verbose)
 	asm="""
 		LSTORE 0x0FFF
 		LADD   0xF000
@@ -318,7 +319,7 @@ def testLinstructions(p, verbose=False):
 		print("{:indic}".format(p.pinset))
 	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0xFFFF)
 	
-	reset(p)
+	reset(p, verbose)
 	asm="""
 		Store 0b01010101 Rint
 		LXOR   0xFFFF
@@ -335,7 +336,7 @@ def testLinstructions(p, verbose=False):
 
 def testBitShift(p, verbose=False):
 	if (verbose):
-		print("="*nbEqSigns+"        Bit shifting        "+"="*nbEqSigns)
+		printHeader("=", "Bit Shifting")
 	asm="""
 		LSTORE 0xAAAA
 		STORE RINT RIOA
@@ -349,7 +350,7 @@ def testBitShift(p, verbose=False):
 		print(p.ioa)
 		print(p.pinset)
 	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0x5555)
-	reset(p)
+	reset(p, verbose)
 	asm="""
 		LSTORE 0x00FF
 		STORE RINT RIOA
@@ -364,7 +365,7 @@ def testBitShift(p, verbose=False):
 		print(p.ioa)
 		print(p.pinset)
 	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0x3FC0)
-	reset(p)
+	reset(p, verbose)
 	asm="""
 		STORE 100 RIOB
 		LSTORE 0x0FF0
@@ -377,6 +378,54 @@ def testBitShift(p, verbose=False):
 	if verbose:
 		print("{:indic}".format(p.pinset))
 	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0x0000)
+
+
+def testIOAsubRegs(p,verbose):
+	if (verbose):
+		printHeader("=", "I/O A sub-registers")
+	asm="""
+		LSTORE 0
+		STORE RINT RIOA
+		STORE 0x99  RINT
+		STORE RINT RIOAL
+		END
+		"""
+	loadProgram(p,asm,verbose)
+	run(p,verbose)
+	if verbose:
+		print(p.ioa)
+	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0x9900)
+
+	reset(p, verbose)
+	asm="""
+		LSTORE 0
+		STORE RINT RIOA
+		STORE 0x55  RINT
+		STORE RINT RIOAL
+		ADD 0x55
+		STORE RINT RIOAR
+		END
+		"""
+	loadProgram(p,asm,verbose)
+	run(p,verbose)
+	if verbose:
+		print(p.ioa)
+	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0x55AA)
+
+	reset(p, verbose)
+	asm="""
+		STORE 0x55  RINTL
+		ADD 0x55
+		STORE RINT RIOA
+		END
+		"""
+	loadProgram(p,asm,verbose)
+	run(p,verbose)
+	if verbose:
+		print(p.ioa)
+	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0x5555)
+
+
 
 if __name__ == '__main__' :
 	verbose = False

@@ -81,9 +81,17 @@ class V16alpha(Processor)  :
 		self.program = bytearray([0xFF]*2**V16alpha.INSTRUCTION_ADDRESSING_SIZE*V16alpha.INSTRUCTION_SIZE)
 		self.programCounter= Register(V16alpha.INSTRUCTION_ADDRESSING_SIZE, name="COUNTER")
 		self.register = Register(16, name="INTERNAL")
+		self.registerl= Register(8, name="INTERNAL left")
+		self.registerr= Register(8, name="INTERNAL right")
+		self.register.setSubset(0,self.registerl)
+		self.register.setSubset(8,self.registerr)
 		self.stackPointer = Register(4, name="STACK")
 		self.stack = bytearray([0x00]*2**self.stackPointer.size)
 		self.ioa = Register(16, name="I/O A")
+		self.ioal= Register(8, name="I/O A left")
+		self.ioar= Register(8, name="I/O A right")
+		self.ioa.setSubset(0,self.ioal)
+		self.ioa.setSubset(8,self.ioar)
 		self.iob = Register(8,  name="I/O B")
 		self.io = self.ioa
 		self.err = Register(4, name="ERROR")
@@ -161,6 +169,10 @@ class V16alpha(Processor)  :
 			0xD4:self.stackPointer,
 			0xD5:self.ioa,
 			0xD6:self.iob,
+			0xD7:self.ioal,
+			0xD8:self.ioar,
+			0xD9:self.registerl,
+			0xDA:self.registerr,
 			
 			0xE0:"LADD",
 			0xE1:"LREM",

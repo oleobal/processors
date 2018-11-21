@@ -15,9 +15,9 @@ class Register:
 	"""
 	
 	def __str__(self):
-		return "Reg {:<10} {:>3} bits {:<12}".format(self.name, len(self.pins), getStrFromBoolList(self.state))
+		return "Reg {:<10} {:>3} bits {:<8} ({}, 0x{:X})".format(self.name, self.size, getStrFromBoolList(self.state), self.value, self.value)
 	def __repr__(self):
-		return "{} {} bits {}".format(self.name, len(self.pins), getStrFromBoolList(self.state))
+		return "{} {} bits {}".format(self.name, self.size, getStrFromBoolList(self.state))
 	def __format__(self, spec):
 		if spec=="indic":
 			# indicators for subsets
@@ -29,7 +29,7 @@ class Register:
 					arrows+="^"
 				else:
 					arrows+=" "
-			return "Reg {:<10} {:>3} bits {:<12}\n{:>23} {:<12}".format(self.name, len(self.pins), getStrFromBoolList(self.state), "", arrows)
+			return "Reg {:<10} {:>3} bits {:<12}\n{:>23} {:<12}".format(self.name, self.size, getStrFromBoolList(self.state), "", arrows)
 		else :
 			return self.__str__()
 	
@@ -175,6 +175,7 @@ def getBoolListFromInt(integer, bigEndian=True):
 	"""
 	result=[]
 	# TODO optimize
+	# but it's already quite fast actually
 	integer = bin(integer)[2:]
 	for i in range(len(integer)):
 		if integer[i] == "1":
