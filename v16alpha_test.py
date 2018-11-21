@@ -196,6 +196,8 @@ def testConditionals(p, verbose=True):
 		STORE 100 RIOB
 		ifle rint riob    # true
 		store 0b01010101 riob
+		if riob /= 0x55   # false
+		store 0 riob
 		if riob > 0       # true
 		END
 		store 0 riob

@@ -44,6 +44,7 @@ class V16alpha(Processor)  :
 	"RSHIFT":1,
 	
 	"IFEQ"  :2,
+	"IFNE"  :2,
 	"IFLT"  :2,
 	"IFLE"  :2,
 	"IFGT"  :2,
@@ -159,6 +160,7 @@ class V16alpha(Processor)  :
 			0xC2:"IFLE",
 			0xC3:"IFGT",
 			0xC4:"IFGE",
+			0xC5:"IFNE",
 			
 			0xCF:"END",
 			
@@ -545,7 +547,7 @@ class V16alpha(Processor)  :
 		
 		
 		
-		elif op in ["IFEQ", "IFLT", "IFLE", "IFGT", "IFGE"]:
+		elif op in ["IFEQ", "IFNE", "IFLT", "IFLE", "IFGT", "IFGE"]:
 			if len(instruction) == 3:
 				if type(instruction[1]) is int:
 					a = instruction[1]
@@ -560,19 +562,22 @@ class V16alpha(Processor)  :
 				self.err.value = 12
 				return
 			try:
-				if op == "IFEQ":
+				if   op == "IFEQ":
 					if a != b:
 						self.programCounter.value+=1
-				if op == "IFLT":
+				elif op == "IFNE":
+					if a == b:
+						self.programCounter.value+=1
+				elif op == "IFLT":
 					if a >= b:
 						self.programCounter.value+=1
-				if op == "IFLE":
+				elif op == "IFLE":
 					if a > b:
 						self.programCounter.value+=1
-				if op == "IFGT":
+				elif op == "IFGT":
 					if a <= b:
 						self.programCounter.value+=1
-				if op == "IFGE":
+				elif op == "IFGE":
 					if a < b:
 						self.programCounter.value+=1
 			except Exception:

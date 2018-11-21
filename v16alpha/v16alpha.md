@@ -145,11 +145,12 @@ Operations :
 | LXOR  | value     |           | Bitwise RINT XOR op1, into RINT       | 1    |
 | LSTORE| value     |           | Store op1 into RINT                   | 1    |
 |       |           |           |                                       |      |
-| IFEQ  | value/reg | value/reg | execute following instr only if 1= 2  | 2    |
-| IFLT  | value/reg | value/reg | execute following instr only if 1< 2  | 2    |
-| IFLE  | value/reg | value/reg | execute following instr only if 1<=2  | 2    |
-| IFGT  | value/reg | value/reg | execute following instr only if 1> 2  | 2    |
-| IFGE  | value/reg | value/reg | execute following instr only if 1>=2  | 2    |
+| IFEQ  | value/reg | value/reg | execute following instr only if 1 =  2| 2    |
+| IFNE  | value/reg | value/reg | execute following instr only if 1 /= 2| 2    |
+| IFLT  | value/reg | value/reg | execute following instr only if 1 <  2| 2    |
+| IFLE  | value/reg | value/reg | execute following instr only if 1 <= 2| 2    |
+| IFGT  | value/reg | value/reg | execute following instr only if 1 >  2| 2    |
+| IFGE  | value/reg | value/reg | execute following instr only if 1 >= 2| 2    |
 |       |           |           |                                       |      |
 | END   |           |           | End execution                         | 1    |
 
@@ -164,7 +165,7 @@ their condition is true. Essentially, all they do is increment the program
 counter if the condition is false.
 
 The official v16a assembler provides syntactic sugar for tests, with the more
-intuitive symbols `=`, `>`, `>=`, `<`, and `<=`. Use the keyword `IF` for this,
+intuitive symbols `=`, `/=`, `>`, `>=`, `<`, and `<=`. Use the keyword `IF` for this,
 and the expression will be translated. For instance, `IF RINT = 5` is the same
 as `IF RINT EQ 5` which is the same as `IFEQ RINT 5` which translates to
 `C0 D0 05`. Do take care to separate each symbol with whitespace.

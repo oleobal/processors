@@ -8,6 +8,7 @@ The only one as of now is the V16alpha. Files :
  - `v16alpha/v16alpha.py` contains the actual processor as a class
  - `v16alpha/v16alpha_asm.py` contains the assembler
  - `v16alpha_test.py` can be executed to test the processor
+ - `v16alpha_demo.py` has a small demo program
 
 #### An example
 

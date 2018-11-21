@@ -28,6 +28,7 @@ conversionTable={
 	"IFLE" :0xC2,
 	"IFGT" :0xC3,
 	"IFGE" :0xC4,
+	"IFNE" :0xC5,
 	
 	"END"  :0xCF,
 	
@@ -73,11 +74,13 @@ INSTRUCTION_SIZE = 3
 
 ifSubstituteTable = {
 	"=" : "EQ",
+	"/=" : "NE",
 	"<" : "LT",
 	"<=": "LE",
 	">" : "GT",
 	">=": "GE",
 	"EQ": "EQ",
+	"NE": "NE",
 	"LT": "LT",
 	"LE": "LE",
 	"GT": "GT",
