@@ -65,7 +65,7 @@ instructionsFollowedByBigInt = [
 	"LAND",
 	"LOR",
 	"LXOR",
-	"LSTORE"
+	"LSTORE",
 ]
 
 INSTRUCTION_SIZE = 3
@@ -158,7 +158,7 @@ def assemble(assembly, sizeWarning=256):
 				byteline.append(conversionTable[i.upper()])
 			else:
 				i = int(i,0)
-				if line[0] in instructionsFollowedByBigInt:
+				if line[0].upper() in instructionsFollowedByBigInt:
 					if i <= 0xFFFF:
 						byteline.append((i&0xFF00)>>8)
 						byteline.append( i&0x00FF)
