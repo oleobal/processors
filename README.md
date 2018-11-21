@@ -10,6 +10,11 @@ The only one as of now is the V16alpha. Files :
  - `v16alpha_test.py` can be executed to test the processor
  - `v16alpha_demo.py` has a small demo program
 
+![An animation of a running demo program](v16alpha/ping-pong.gif)
+
+*The demo program 'bouncing' a 1 off the I/O pins.*
+
+
 #### An example
 
 The assembly code :

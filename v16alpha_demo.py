@@ -1,10 +1,13 @@
-"""
-Demo program for the v16a
-"""
+#!/usr/bin/python3
+
 from v16alpha.v16alpha import V16alpha
 from v16alpha.v16alpha_util import *
 
 from time import sleep
+
+"""
+Demo program for the v16a
+"""
 
 def pingPong():
 	"""
