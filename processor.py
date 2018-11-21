@@ -2,62 +2,7 @@
 Contains general concepts useful for all implementations
 """
 
-
-class Register :
-	"""
-	A binary register with as many bits as you require
-	
-	it is built around an integer, so using the "value" field (which takes or
-	returns an int) is preferable to using "state" (bool list)
-	"""
-	
-	def __str__(self):
-		return "Reg {:<10} {:>3} bits {:<6} (0x{:X})".format(self.name, self.size, self.value, self.value)
-	def __repr__(self):
-		return "{} {} bits {} (0x{:X})".format(self.name, self.size, self.value, self.value)
-	
-	def __init__(self, size, name=""):
-		self.name = name
-		self.size = size
-		self.maxValue = 2**size -1
-		self._value = 0
-		"""
-		pinsets to be updated when this register's value changes
-		"""
-		self.pinsets = []
-	
-	@property
-	def value(self):
-		return self._value
-	@value.setter
-	def value(self, newVal):
-		# should this test be after the over/underflow calculations ?
-		if newVal == self._value:
-			return
-		while newVal < 0 or newVal > self.maxValue :
-			if (newVal < 0):
-				newVal += self.maxValue+1
-			if (newVal > self.maxValue):
-				newVal -= self.maxValue+1
-		self._value = newVal
-		for p in self.pinsets:
-			p.state = self._value
-
-	@property
-	def state(self):
-		s= getBoolListFromInt(self._value)
-		while len(s) < self.size :
-			s = [False] + s
-		return s
-	@state.setter
-	def state(self, newState):
-		if len(newState) > self.size:
-			raise ValueError("Too many bits")
-		self.value = getIntFromBoolList(newState)
-
-
-
-class Pinset:
+class Register:
 	"""
 	A set of exposed pins, for I/O
 	Pins function in a boolean way
@@ -70,24 +15,34 @@ class Pinset:
 	"""
 	
 	def __str__(self):
-		# indicators for subsets
-		arrows=""
-		for i in self.pins:
-			if type(i) is bool:
-				arrows+="|"
-			elif i[1] == 0:
-				arrows+="^"
-			else:
-				arrows+=" "
-		return "Pin {:<10} {:>3} pins {:<12}\n{:>23} {:<12}".format(self.name, len(self.pins), getStrFromBoolList(self.state), "", arrows)
+		return "Reg {:<10} {:>3} bits {:<12}".format(self.name, len(self.pins), getStrFromBoolList(self.state))
 	def __repr__(self):
-		return "{} {} pins {}".format(self.name, len(self.pins), getStrFromBoolList(self.state))
+		return "{} {} bits {}".format(self.name, len(self.pins), getStrFromBoolList(self.state))
+	def __format__(self, spec):
+		if spec=="indic":
+			# indicators for subsets
+			arrows=""
+			for i in self.pins:
+				if type(i) is bool:
+					arrows+="|"
+				elif i[1] == 0:
+					arrows+="^"
+				else:
+					arrows+=" "
+			return "Reg {:<10} {:>3} bits {:<12}\n{:>23} {:<12}".format(self.name, len(self.pins), getStrFromBoolList(self.state), "", arrows)
+		else :
+			return self.__str__()
 	
-	def __init__(self, numberOfPins, name=""):
+	def __init__(self, numberOfPins, name="", overflow=True):
+		"""
+		if overflow is true, the register will silently overflow or underflow
+		when given values too big or too small
+		"""
 		self.name = name
+		self.size = numberOfPins
+		self.maxValue = 2**numberOfPins -1
+		self.doesOverflow=overflow
 		self.pins = [False]*numberOfPins
-		# registers to change when this changes
-		self.registers = []
 		
 		self.subscribers=[]
 	
@@ -118,6 +73,7 @@ class Pinset:
 	def setPinState(self, index, newState):
 		"""
 		set state for a single pin
+		0-indexed from the left
 		"""
 		if type(self.pins[index]) is bool:
 			if self.pins[index] == newState:
@@ -127,8 +83,6 @@ class Pinset:
 			if self.pins[index][0].getPinState(self.pins[index][1]) == newState:
 				return
 			self.pins[index][0].setPinState(self.pins[index][1], newState)
-		for r in self.registers:
-			r.value = getIntFromBoolList(self.state)
 		for s in self.subscribers:
 			if s[2](self.state):
 				if (s[3]):
@@ -140,6 +94,7 @@ class Pinset:
 	def getPinState(self, index):
 		"""
 		get state for a single pin
+		0-indexed from the left
 		"""
 		p = self.pins[index]
 		if type(p) is bool:
@@ -147,10 +102,6 @@ class Pinset:
 		else:
 			return p[0].getPinState(p[1])
 	
-	
-	@property
-	def size(self):
-		return len(self.pins)
 	
 	@property
 	def state(self):
@@ -190,62 +141,40 @@ class Pinset:
 		return getIntFromBoolList(self.state)
 	@value.setter
 	def value(self, newVal):
+		if self.doesOverflow:
+			while newVal < 0 or newVal > self.maxValue :
+				if (newVal < 0):
+					newVal += self.maxValue+1
+				if (newVal > self.maxValue):
+					newVal -= self.maxValue+1
 		s = getBoolListFromInt(newVal)
 		if len(s) > len(self.pins):
 			raise ValueError("Value too large")
 		self.state = s
 	
-def link(register, pinset):
-	"""
-	helper function to link a register and a pinset together
-	(changing the value of one changes the value of the other)
-	"""
-	# add code to check for duplicates, maybe ?
-	register.pinsets.append(pinset)
-	pinset.registers.append(register)
-
-def createLinkedRegAndPinset(size, name=""):
-	"""
-	helper function that creates a register and pinset of same size and name,
-	links them, and returns a tuple (r,p)
-	"""
-	r = Register(size, name)
-	p = Pinset(size, name)
-	link(r,p)
-	return (r,p)
-	
-def createLinkedPinsetFromReg(register):
-	"""
-	helper function that creates a pinset from a register (same size and name),
-	links them, and returns the pinset
-	"""
-	p = Pinset(register.size, register.name)
-	link(register, p)
-	return p
-
-
 
 
 	
 def getIntFromBoolList(boollist, bigEndian=True):
 	"""
 	converts a list of bools into an int
-	Don't fight me, please
 	"""
 	result = 0
-	if bigEndian:
+	if not bigEndian:
 		boollist.reverse()
 	for i in range(len(boollist)):
-		result+=boollist[i]*2**i
-	# TODO there's probably a way to do it without computation..
+		if boollist[i]:
+			result+=1
+		result<<=1
+	result>>=1 # else it's one bit too much
 	return result
 	
 def getBoolListFromInt(integer, bigEndian=True):
 	"""
 	converts an integer into a list of bools
 	"""
-	# this is even worse than the other function, god
 	result=[]
+	# TODO optimize
 	integer = bin(integer)[2:]
 	for i in range(len(integer)):
 		if integer[i] == "1":
@@ -268,8 +197,6 @@ def getStrFromBoolList(boollist):
 	return result
 
 
-
-	
 class Processor :
 	pass
 

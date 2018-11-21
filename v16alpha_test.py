@@ -107,7 +107,7 @@ DSPR RINT RINO"""
 		printByteArray(p.program, groupBytesBy=3, name="Program data")
 		print(p.register)
 		print(p.io)
-		print(p.pinset)
+		print("{:indic}".format(p.pinset))
 	
 	assert p.program[21] == 0xCF
 	assert p.err.value == 9
@@ -122,7 +122,7 @@ DSPR RINT RINO"""
 	if verbose:
 		printByteArray(p.program, groupBytesBy=3, name="Program data")
 		print(p.register)
-		print(p.pinset)
+		print("{:indic}".format(p.pinset))
 		print("Cycles :",p.cycleCount)
 
 	
@@ -203,7 +203,7 @@ def testDynamicJump(p, verbose=False):
 	run(p, verbose, safety=100)
 	
 	if verbose:
-		print(p.pinset)
+		print("{:indic}".format(p.pinset))
 	
 	assert(getIntFromBoolList(p.pinset.state) == 0b01001000000001000000000000001000)
 
@@ -225,7 +225,7 @@ def testArithmetic(p, verbose=False):
 	loadProgram(p, asm, verbose)
 	run(p, verbose, safety=100)
 	if verbose:
-		print(p.pinset)
+		print("{:indic}".format(p.pinset))
 	assert(getIntFromBoolList(p.pinset.state) & 0x00FF0000 == 0b00001010000000000000000)
 	reset(p)
 	if verbose:
@@ -240,7 +240,7 @@ def testArithmetic(p, verbose=False):
 	loadProgram(p, asm, verbose)
 	run(p, verbose, safety=100)
 	if verbose:
-		print(p.pinset)
+		print("{:indic}".format(p.pinset))
 
 	assert(getIntFromBoolList(p.pinset.state) & 0x00FF0000 == 0b010111110000000000000000)
 	reset(p)
@@ -257,7 +257,7 @@ def testArithmetic(p, verbose=False):
 	loadProgram(p, asm, verbose)
 	run(p, verbose, safety=100)
 	if verbose:
-		print(p.pinset)
+		print("{:indic}".format(p.pinset))
 	assert(getIntFromBoolList(p.pinset.state) & 0x00FF0000 == 0b010110100000000000000000)
 
 
@@ -284,7 +284,7 @@ def testConditionals(p, verbose=True):
 	loadProgram(p, asm, verbose)
 	run(p, verbose, safety=100)
 	if verbose:
-		print(p.pinset)
+		print("{:indic}".format(p.pinset))
 	assert(getIntFromBoolList(p.pinset.state) & 0x00FF0000 == 0b010101010000000000000000)
 
 
@@ -301,7 +301,7 @@ def testLinstructions(p, verbose=False):
 	run(p,verbose)
 	
 	if verbose:
-		print(p.pinset)
+		print("{:indic}".format(p.pinset))
 	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0x0101)
 	
 	reset(p)
@@ -315,7 +315,7 @@ def testLinstructions(p, verbose=False):
 	run(p,verbose)
 	
 	if verbose:
-		print(p.pinset)
+		print("{:indic}".format(p.pinset))
 	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0xFFFF)
 	
 	reset(p)
@@ -329,7 +329,7 @@ def testLinstructions(p, verbose=False):
 	run(p,verbose)
 	
 	if verbose:
-		print(p.pinset)
+		print("{:indic}".format(p.pinset))
 	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0xFFAA)
 
 
@@ -375,7 +375,7 @@ def testBitShift(p, verbose=False):
 	loadProgram(p,asm,verbose)
 	run(p,verbose)
 	if verbose:
-		print(p.pinset)
+		print("{:indic}".format(p.pinset))
 	assert(getIntFromBoolList(p.pinset.state) & 0x0000FFFF == 0x0000)
 
 if __name__ == '__main__' :

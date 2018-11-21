@@ -89,26 +89,26 @@ class V16alpha(Processor)  :
 		self.err = Register(4, name="ERROR")
 		# TODO catch exceptions and put them here instead
 		
-		self.pinset = Pinset(32, "V16alpha")
+		self.pinset = Register(32, "V16alpha")
 		
-		self.clockPin = Pinset(1, "Clock")
+		self.clockPin = Register(1, "Clock")
 		def handleClockUp(self, clockPinset):
 			clockPinset.setPinState(0, False)
 			self.cycle()
 		self.clockPin.addSubscriber(self, handleClockUp, lambda x: x==[True], True)
 		
 		self.pinset.setSubset(0, self.clockPin)
-		self.pinset.setSubset(1, createLinkedPinsetFromReg(self.err))
+		self.pinset.setSubset(1, self.err)
 		
 		# prog load is not subscribed to because we only check it when an
 		# instruction is finished
-		self.progLoadPin = Pinset(1, "Prog load")
+		self.progLoadPin = Register(1, "Prog load")
 		self.pinset.setSubset(5, self.progLoadPin)
-		self.progCtrlPin = Pinset(2, "Prog ctrl")
+		self.progCtrlPin = Register(2, "Prog ctrl")
 		
 		self.pinset.setSubset(6, self.progCtrlPin)
-		self.pinset.setSubset(8, createLinkedPinsetFromReg(self.iob))
-		self.pinset.setSubset(16, createLinkedPinsetFromReg(self.ioa))
+		self.pinset.setSubset(8, self.iob)
+		self.pinset.setSubset(16, self.ioa)
 		
 		self.currentInstruction  = bytearray([0xFF]*V16alpha.INSTRUCTION_SIZE)
 		self.currentInstructionDecoded = None
