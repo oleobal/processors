@@ -2,6 +2,8 @@
  * D version of common utilities
  */
 import std.stdio;
+import std.typecons;
+import std.format;
 
 
 /**
@@ -11,25 +13,101 @@ import std.stdio;
  */
 class Register
 {
-	// TODO investigate whether using a BitArray would be better
-	// for performance (size benefits being irrelevant)
-	string name;
-	int size;
-	ulong maxValue;
-	bool[] pins;
+	immutable string name;
+	immutable int size;
+	immutable ulong maxValue;
+	/**
+	 * first boolean : whether it part of a subregister
+	 * if so, the last 2 values are used :
+	 * we look up the value of (Register) at index (int)
+	 * else the second bool holds the value
+	 */
+	Tuple!(bool, bool, Register, int)[] pins;
+	// note : not sure whether Register or Register*, I think since it's
+	// a class it's by default a reference type so it should be a reference
+	
 	this(int nbOfBits, string name="")
 	{
-		this.pins = new bool[nbOfBits]; // bool.init == false
+		this.pins = [];
+		for (int i = 0 ; i<nbOfBits ; i++) // I'm sure there's a better way..
+			this.pins ~= [tuple(false, false, cast(Register)null, cast(int)null)]; 
+		
 		this.size = nbOfBits;
-		this.maxValue = 1;
+		int _maxValue = 1;
 		for (int i = 1 ; i<nbOfBits ; i++)
-		{ maxValue<<=1; maxValue+=1; }
+		{ _maxValue<<=1; _maxValue+=1; }
+		this.maxValue = _maxValue;
 		this.name = name;
 		
 	}
 	
+	// https://wiki.dlang.org/Defining_custom_print_format_specifiers
+	
+	void toString(scope void delegate(const(char)[]) sink, FormatSpec!char fmt) const
+	{
+		switch(fmt.spec)
+		{
+			case 'm':
+				sink(format("Reg %-10s %12s (%s,%04X)", this.name, getStringFromBoolList(this.state()), getNumberFromBoolList(this.state()), getNumberFromBoolList(this.state())));
+				break;
+			default:
+				sink(format("%s %s (%s,%X)", this.name, getStringFromBoolList(this.state()), getNumberFromBoolList(this.state()), getNumberFromBoolList(this.state())));
+				break;
+		}
+	}
+	
+	
+	/**
+	 * set the given register as a subset of the present register,
+	 * at given index (indexed from 0 left to right)
+	 */
+	void setSubset(int index, Register register)
+	{
+		for (int i=0;i<register.pins.length;i++)
+		{
+			this.pins[index+i] = tuple(true, false, register, i);
+		}
+	}
+	
+	void setPinState(int index, bool value)
+	{
+		if (this.pins[index][0])
+		{
+			this.pins[index][2].setPinState(this.pins[index][3], value);
+		}
+		else
+		{
+			this.pins[index][1] = value;
+		}
+	}
+	
+	// is const right here ?
+	const bool getPinState(int index)
+	{
+		if (this.pins[index][0])
+			return this.pins[index][2].getPinState(this.pins[index][3]);
+		else
+			return this.pins[index][1];
+	}
+	
+	
+	// is const right here ?
 	@property
-	ulong value() { return getNumberFromBoolList(this.pins);}
+	const bool[] state()
+	{
+		bool[] result=[];
+		for (int i=0; i<this.size;i++)
+			result~=[this.getPinState(i)];
+		return result;
+	}
+	// TODO state setter
+	
+	
+	// TODO value properties
+	@property
+	ulong value() { return getNumberFromBoolList(this.state);}
+	
+	
 	/+
 	@property
 	ulong value(ulong newVal)
@@ -39,6 +117,24 @@ class Register
 	+/
 	
 }
+
+unittest /// basic register and sub-register functionality
+{
+	Register smallR = new Register(4);
+	smallR.setPinState(0,true);
+	smallR.setPinState(2,true);
+	Register bigR = new Register(8);
+	bigR.setPinState(1, true);
+	bigR.setSubset(4,smallR);
+	bigR.setPinState(7, true);
+	//writeln(format("%m",bigR));
+	assert(bigR.value == 0x4B);
+	assert(smallR.value == 0xB);
+}
+
+
+
+
 
 /**
  * takes a big-endian list of bools and returns the corresponding integer
