@@ -106,3 +106,8 @@ venv.bak/
 
 # Nim files
 **/nimcache/
+
+# D files
+*.exe
+*.lst
+*.obj
