@@ -23,8 +23,10 @@ class Register
 	 * else the second bool holds the value
 	 */
 	Tuple!(bool, bool, Register, int)[] pins;
-	// note : not sure whether Register or Register*, I think since it's
-	// a class it's by default a reference type so it should be a reference
+	Tuple!(void delegate(bool[]), bool function(bool[]))[] subscribers;
+	// maybe it should be a delegate instead of just a function pointer
+	// since it's typically going to be an object subscribing to something
+	// I'm not sure
 	
 	this(int nbOfBits, string name="")
 	{
@@ -38,6 +40,8 @@ class Register
 		{ _maxValue<<=1; _maxValue+=1; }
 		this.maxValue = _maxValue;
 		this.name = name;
+		
+		//this.subscribers=[];
 		
 	}
 	
@@ -69,15 +73,34 @@ class Register
 		}
 	}
 	
+	/**
+	 * on state change, (B functionToExecute) will be executed with
+	 * the state as argument, but only if (B condition) (given the state as well)
+	 * returns true
+	 */
+	void addSubscriber(void delegate(bool[]) functionToExecute, bool function(bool[]) condition=function (bool[] b) => true)
+	{
+		this.subscribers~=[tuple(functionToExecute, condition)];
+	}
+	
 	void setPinState(int index, bool value)
 	{
 		if (this.pins[index][0])
 		{
+			if (this.pins[index][2].getPinState(this.pins[index][3]) != value)
+				return;
 			this.pins[index][2].setPinState(this.pins[index][3], value);
 		}
 		else
 		{
+			if (this.pins[index][1] == value)
+				return;
 			this.pins[index][1] = value;
+		}
+		for (int i=0 ; i<this.subscribers.length;i++)
+		{
+			if (this.subscribers[i][1](this.state))
+				this.subscribers[i][0](this.state);
 		}
 	}
 	
@@ -140,8 +163,38 @@ unittest /// basic register and sub-register functionality
 	assert(smallR.state == [false, true, false, true]);
 	smallR.state = [true, true, true, false];
 	assert(bigR.value == 0x5E);
+	
 }
+unittest /// subscriber functionality
+{
+	class Something
+	{
+		int member;
+		this()
+		{
+			this.member = 0;
+		}
+		void aFunction(bool[] input)
+		{
+			if ((getNumberFromBoolList(input) & 1) == 1)
+				this.member+=1;
+		}
+		void anotherFunction(bool[] input)
+		{
+			this.member*=-1;
+		}
+	}
 
+	Something s = new Something();
+	Register r = new Register(4);
+	r.addSubscriber(&(s.aFunction));
+	r.state = [false, false, true, false];
+	assert(s.member == 0);
+	r.value= r.value + 1;
+	assert(s.member == 1);
+	
+	// TODO SORT THIS OUT
+}
 
 
 
