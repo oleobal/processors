@@ -81,8 +81,7 @@ class Register
 		}
 	}
 	
-	// is const right here ?
-	const bool getPinState(int index)
+	bool getPinState(int index) const
 	{
 		if (this.pins[index][0])
 			return this.pins[index][2].getPinState(this.pins[index][3]);
@@ -90,31 +89,37 @@ class Register
 			return this.pins[index][1];
 	}
 	
-	
-	// is const right here ?
 	@property
-	const bool[] state()
+	bool[] state() const
 	{
 		bool[] result=[];
 		for (int i=0; i<this.size;i++)
 			result~=[this.getPinState(i)];
 		return result;
 	}
-	// TODO state setter
 	
+	@property
+	bool[] state(bool[] newState)
+	{
+		if (newState.length != this.size)
+			throw new Exception("Parameter size (%s) is different from object size (%s).".format(newState.length, this.size));
+		for (int i=0; i<this.size;i++)
+		{
+			this.setPinState(i, newState[i]);
+		}
+		return this.state;
+	}
 	
 	// TODO value properties
 	@property
-	ulong value() { return getNumberFromBoolList(this.state);}
+	ulong value() const { return getNumberFromBoolList(this.state);}
 	
 	
-	/+
+	
 	@property
 	ulong value(ulong newVal)
-	{
-		
-	}
-	+/
+	{ return getNumberFromBoolList(this.state(getBoolListFromNumber(newVal, this.size))); }
+	
 	
 }
 
@@ -130,6 +135,11 @@ unittest /// basic register and sub-register functionality
 	//writeln(format("%m",bigR));
 	assert(bigR.value == 0x4B);
 	assert(smallR.value == 0xB);
+	
+	bigR.value = 0x55;
+	assert(smallR.state == [false, true, false, true]);
+	smallR.state = [true, true, true, false];
+	assert(bigR.value == 0x5E);
 }
 
 
