@@ -83,13 +83,31 @@ class Register
 		this.subscribers~=[tuple(functionToExecute, condition)];
 	}
 	
-	void setPin(int index, bool value)
+	/**
+	 * sets the pin at (B index) to the (B value).
+	 * if (B desiredState) is given, subscribers will only be called if that
+	 * state is reached.
+	 */
+	void setPin(int index, bool value, bool[] desiredState=cast(bool[])null)
 	{
 		if (this.pins[index][0])
 		{
 			if (this.pins[index][2].getPin(this.pins[index][3]) == value)
 				return;
-			this.pins[index][2].setPin(this.pins[index][3], value);
+			
+			if (!(desiredState is null))
+			{
+				// cut a slice of the desired state for the area corresponding
+				// to the sub-register
+				int startIndex;
+				for (startIndex = index ; this.pins[startIndex][3] > 0 ;startIndex--) { }
+				// this could be a target for optimisation since I do the same
+				// calculation multiple times (for subsets of more than 1 pin)
+				bool[] newDS = desiredState[startIndex .. startIndex+this.pins[startIndex][2].pins.length];
+				this.pins[index][2].setPin(this.pins[index][3], value, newDS);
+			}
+			else
+				this.pins[index][2].setPin(this.pins[index][3], value);
 		}
 		else
 		{
@@ -97,10 +115,14 @@ class Register
 				return;
 			this.pins[index][1] = value;
 		}
-		for (int i=0 ; i<this.subscribers.length;i++)
+		
+		if (desiredState is null || desiredState == this.state)
 		{
-			if (this.subscribers[i][1](this.state))
-				this.subscribers[i][0](this.state);
+			for (int i=0 ; i<this.subscribers.length;i++)
+			{
+				if (this.subscribers[i][1](this.state))
+					this.subscribers[i][0](this.state);
+			}
 		}
 	}
 	
@@ -128,21 +150,17 @@ class Register
 			throw new Exception("Parameter size (%s) is different from object size (%s).".format(newState.length, this.size));
 		for (int i=0; i<this.size;i++)
 		{
-			this.setPin(i, newState[i]);
+			this.setPin(i, newState[i], newState);
 		}
 		return this.state;
 	}
 	
-	// TODO value properties
 	@property
 	ulong value() const { return getNumberFromBoolList(this.state);}
-	
-	
 	
 	@property
 	ulong value(ulong newVal)
 	{ return getNumberFromBoolList(this.state(getBoolListFromNumber(newVal, this.size))); }
-	
 	
 }
 
@@ -170,11 +188,11 @@ unittest /// subscriber functionality
 	class Something
 	{
 		int member;
-		int member2;
+		int mambo;
 		this()
 		{
 			this.member = 0;
-			this.member2 = 0;
+			this.mambo  = 0;
 		}
 		void aFunction(bool[] input)
 		{
@@ -185,7 +203,7 @@ unittest /// subscriber functionality
 		}
 		void anotherFunction(bool[] input)
 		{
-			this.member2--;
+			this.mambo--;
 		}
 	}
 
@@ -194,42 +212,29 @@ unittest /// subscriber functionality
 	r.addSubscriber(&(s.aFunction));
 	r.state = [false, false, true, false];
 	assert(s.member == 0);
-	r.value= r.value + 1;
+	r.value= r.value + 1; // 0011
 	assert(s.member == 1);
-	
+	r.value= r.value + 1; // 0100
+	assert(s.member == 1);
 	r.addSubscriber(&(s.anotherFunction), function (bool[] b) {return b[0];} );
-	r.value= r.value + 1;
-	/+
-	here we can see how the implementation can bite us in the rear.
-	I'm adding 1 to value, which turns 0011 (3) into 0100, which means 3
-	bits must be changed, which is translated to 3 "setPin" calls.
-	So we go through :
-		0011 (3)
-		0111 (7)
-		0101 (5)
-		0100 (4)
-	because pins are set left to right. And every time, aFunction is triggered.
-	Two of these intermediary states end with the rightmost bit at 1, so
-	member is increased by 2 even though it would not increase if we went
-	directly from 0011 to 0100.
-	+/
+	r.value= r.value + 1; // 0101
+	assert(s.member == 2);
+	assert(s.mambo  == 0);
+	r.value= r.value + 1; // 0110
+	assert(s.member == 2);
+	assert(s.mambo  == 0);
+	r.value= r.value + 1; // 0111
 	assert(s.member == 3);
-	assert(s.member2 == 0);
-	r.value= r.value + 1;
+	assert(s.mambo  == 0);
+	r.value= r.value + 1; // 1000
+	assert(s.member == 3);
+	assert(s.mambo  ==-1);
+	r.value= r.value + 1; // 1001
 	assert(s.member == 4);
-	assert(s.member2 == 0);
-	r.value= 8;
-	//writeln(s.member, " " ,s.member2);
-	/+
-	Same as before :
-		0101 (5)
-		1101 (13)
-		1001 (9)
-		1000 (8)
-	With aFunction triggered twice and anotherFunction three times
-	+/
-	assert(s.member == 6);
-	assert(s.member2 == -3);	
+	assert(s.mambo  ==-2);
+	r.value= 0;
+	assert(s.member == 4);
+	assert(s.mambo  ==-2);
 }
 
 
