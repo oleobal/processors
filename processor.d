@@ -203,7 +203,7 @@ unittest /// subscriber functionality
 		}
 		void anotherFunction(bool[] input)
 		{
-			this.mambo--;
+			this.mambo++;
 		}
 	}
 
@@ -228,13 +228,37 @@ unittest /// subscriber functionality
 	assert(s.mambo  == 0);
 	r.value= r.value + 1; // 1000
 	assert(s.member == 3);
-	assert(s.mambo  ==-1);
+	assert(s.mambo  == 1);
 	r.value= r.value + 1; // 1001
 	assert(s.member == 4);
-	assert(s.mambo  ==-2);
+	assert(s.mambo  == 2);
 	r.value= 0;
 	assert(s.member == 4);
-	assert(s.mambo  ==-2);
+	assert(s.mambo  == 2);
+	
+	// check whether a subscriber for a sub-register is correctly triggered by
+	// a modification of its parent register
+	s = new Something();
+	r = new Register(4);
+	Register bigR = new Register(12);
+	bigR.setSubset(4, r);
+	bigR.addSubscriber(&(s.aFunction));
+	r.addSubscriber(&(s.anotherFunction), function (bool[] b) {return b[0];} );
+	
+	bigR.value = 0b111101111110;
+	assert(s.member == 0 && s.mambo == 0);
+	bigR.value = bigR.value + 1;
+	assert(s.member == 1 && s.mambo == 0);
+	bigR.value = bigR.value + 1; // 1111 1000 0000
+	assert(s.member == 1 && s.mambo == 1);
+	bigR.value = 1;
+	assert(s.member == 2 && s.mambo == 1);
+	bigR.value = 0b000010000000;
+	assert(s.member == 2 && s.mambo == 2);
+	bigR.value = 0b000101000000;
+	assert(s.member == 2 && s.mambo == 2);
+	bigR.value = 0b000010000001;
+	assert(s.member == 3 && s.mambo == 3);
 }
 
 
