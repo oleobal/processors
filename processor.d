@@ -55,7 +55,7 @@ class Register
 				sink(format("Reg %-10s %12s (%s,%04X)", this.name, getStringFromBoolList(this.state()), getNumberFromBoolList(this.state()), getNumberFromBoolList(this.state())));
 				break;
 			default:
-				sink(format("%s %s (%s,%X)", this.name, getStringFromBoolList(this.state()), getNumberFromBoolList(this.state()), getNumberFromBoolList(this.state())));
+				sink(format("Reg %s %s (%s,%X)", this.name, getStringFromBoolList(this.state()), getNumberFromBoolList(this.state()), getNumberFromBoolList(this.state())));
 				break;
 		}
 	}
@@ -83,13 +83,13 @@ class Register
 		this.subscribers~=[tuple(functionToExecute, condition)];
 	}
 	
-	void setPinState(int index, bool value)
+	void setPin(int index, bool value)
 	{
 		if (this.pins[index][0])
 		{
-			if (this.pins[index][2].getPinState(this.pins[index][3]) != value)
+			if (this.pins[index][2].getPin(this.pins[index][3]) == value)
 				return;
-			this.pins[index][2].setPinState(this.pins[index][3], value);
+			this.pins[index][2].setPin(this.pins[index][3], value);
 		}
 		else
 		{
@@ -104,10 +104,10 @@ class Register
 		}
 	}
 	
-	bool getPinState(int index) const
+	bool getPin(int index) const
 	{
 		if (this.pins[index][0])
-			return this.pins[index][2].getPinState(this.pins[index][3]);
+			return this.pins[index][2].getPin(this.pins[index][3]);
 		else
 			return this.pins[index][1];
 	}
@@ -117,7 +117,7 @@ class Register
 	{
 		bool[] result=[];
 		for (int i=0; i<this.size;i++)
-			result~=[this.getPinState(i)];
+			result~=[this.getPin(i)];
 		return result;
 	}
 	
@@ -128,7 +128,7 @@ class Register
 			throw new Exception("Parameter size (%s) is different from object size (%s).".format(newState.length, this.size));
 		for (int i=0; i<this.size;i++)
 		{
-			this.setPinState(i, newState[i]);
+			this.setPin(i, newState[i]);
 		}
 		return this.state;
 	}
@@ -149,12 +149,12 @@ class Register
 unittest /// basic register and sub-register functionality
 {
 	Register smallR = new Register(4);
-	smallR.setPinState(0,true);
-	smallR.setPinState(2,true);
+	smallR.setPin(0,true);
+	smallR.setPin(2,true);
 	Register bigR = new Register(8);
-	bigR.setPinState(1, true);
+	bigR.setPin(1, true);
 	bigR.setSubset(4,smallR);
-	bigR.setPinState(7, true);
+	bigR.setPin(7, true);
 	//writeln(format("%m",bigR));
 	assert(bigR.value == 0x4B);
 	assert(smallR.value == 0xB);
@@ -170,18 +170,22 @@ unittest /// subscriber functionality
 	class Something
 	{
 		int member;
+		int member2;
 		this()
 		{
 			this.member = 0;
+			this.member2 = 0;
 		}
 		void aFunction(bool[] input)
 		{
+			//writeln(input);
+			//writeln("-- ", getNumberFromBoolList(input), " ", (getNumberFromBoolList(input) & 1));
 			if ((getNumberFromBoolList(input) & 1) == 1)
-				this.member+=1;
+				this.member++;
 		}
 		void anotherFunction(bool[] input)
 		{
-			this.member*=-1;
+			this.member2--;
 		}
 	}
 
@@ -193,7 +197,39 @@ unittest /// subscriber functionality
 	r.value= r.value + 1;
 	assert(s.member == 1);
 	
-	// TODO SORT THIS OUT
+	r.addSubscriber(&(s.anotherFunction), function (bool[] b) {return b[0];} );
+	r.value= r.value + 1;
+	/+
+	here we can see how the implementation can bite us in the rear.
+	I'm adding 1 to value, which turns 0011 (3) into 0100, which means 3
+	bits must be changed, which is translated to 3 "setPin" calls.
+	So we go through :
+		0011 (3)
+		0111 (7)
+		0101 (5)
+		0100 (4)
+	because pins are set left to right. And every time, aFunction is triggered.
+	Two of these intermediary states end with the rightmost bit at 1, so
+	member is increased by 2 even though it would not increase if we went
+	directly from 0011 to 0100.
+	+/
+	assert(s.member == 3);
+	assert(s.member2 == 0);
+	r.value= r.value + 1;
+	assert(s.member == 4);
+	assert(s.member2 == 0);
+	r.value= 8;
+	//writeln(s.member, " " ,s.member2);
+	/+
+	Same as before :
+		0101 (5)
+		1101 (13)
+		1001 (9)
+		1000 (8)
+	With aFunction triggered twice and anotherFunction three times
+	+/
+	assert(s.member == 6);
+	assert(s.member2 == -3);	
 }
 
 
