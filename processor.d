@@ -1,6 +1,8 @@
 /**
  * D version of common utilities
  */
+module processor;
+ 
 import std.stdio;
 import std.typecons;
 import std.format;
@@ -431,4 +433,4 @@ unittest
 	}
 }
 
-void main() { } ;
+class Processor {}
